@@ -1,14 +1,17 @@
 [workspace]
 resolver = "3"
 
-members = [
+members = ["backend",
     "database"
-]
+, "frontend/fluxer"]
 
 [workspace.dependencies]
 pluxer-database.path = "./database"
+pluxer-backend.path = "./backend"
 
-sea-orm = { version = "1", features = [
+ulid = "3.0.0"
+
+sea-orm = { version = "2.0.2", features = [
     "sqlx-sqlite",
     "runtime-tokio-rustls",
     "macros",

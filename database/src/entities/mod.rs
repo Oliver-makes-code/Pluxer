@@ -37,9 +37,3 @@ impl TryFromU64 for DatabaseId {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, DeriveValueType)]
 pub struct DatabaseSnowflake(pub u64);
-
-impl TryFromU64 for DatabaseSnowflake {
-    fn try_from_u64(value: u64) -> Result<Self, sea_orm::prelude::DbErr> {
-        return Ok(Self(value));
-    }
-}
