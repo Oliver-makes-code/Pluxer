@@ -1,0 +1,17 @@
+[workspace]
+resolver = "3"
+
+members = [
+    "database"
+]
+
+[workspace.dependencies]
+pluxer-database.path = "./database"
+
+sea-orm = { version = "1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+] }
+
+tokio = { version = "1", features = ["full"] }

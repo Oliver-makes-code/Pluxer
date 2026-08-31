@@ -1,0 +1,9 @@
+[package]
+name = "pluxer-database"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+sea-orm.workspace = true
+tokio.workspace = true
+ulid = "3.0.0"
