@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use fluxer_core::{
     Client,
     client::{ClientOptions, typed_events::DispatchEvent},
@@ -5,7 +7,7 @@ use fluxer_core::{
 use fluxer_rest::RestOptions;
 use pluxer_backend::fluxer::FluxerApi;
 
-use crate::bot::on_message;
+use crate::bot::PluxerContext;
 
 pub async fn run(api_url: &str, token: &str) {
     let options = ClientOptions {
@@ -20,10 +22,11 @@ pub async fn run(api_url: &str, token: &str) {
     };
 
     let mut client = Client::new(options);
-    let rest = client.rest.clone();
+
+    let context = Arc::new(PluxerContext::<FluxerApi>::new(client.rest.clone()));
 
     client.on_typed(move |event| {
-        let rest = rest.clone();
+        let context = context.clone();
         async move {
             match event {
                 DispatchEvent::Ready => {
@@ -31,8 +34,9 @@ pub async fn run(api_url: &str, token: &str) {
                 }
 
                 DispatchEvent::MessageCreate { message, .. } => {
-                    on_message::<FluxerApi>(&rest, &message).await.unwrap();
+                    context.on_message(&message).await.unwrap();
                 }
+
                 _ => {}
             }
         }

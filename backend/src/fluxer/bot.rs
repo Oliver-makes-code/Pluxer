@@ -1,8 +1,8 @@
 use async_trait::async_trait;
 use fluxer_builders::MessagePayloadData;
-use fluxer_core::{Error, Message};
+use fluxer_core::{Channel, Error, Message};
 use fluxer_rest::Rest;
-use fluxer_types::{ApiMessage, Snowflake};
+use fluxer_types::{ApiChannel, ApiMessage, Routes, Snowflake};
 
 use crate::{bot::BackendBot, fluxer::FluxerApi};
 
@@ -24,5 +24,11 @@ impl BackendBot for Rest {
             .await?;
 
         return Ok(Message::from_api(&message));
+    }
+
+    async fn get_channel(&self, channel_id: &Snowflake) -> Result<Channel, Error> {
+        let channel: ApiChannel = self.get(&Routes::channel(channel_id)).await?;
+
+        return Ok(Channel::from_api(&channel));
     }
 }

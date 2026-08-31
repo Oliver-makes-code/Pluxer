@@ -11,4 +11,9 @@ pub trait BackendBot {
         channel_id: &<Self::Api as PluxerApi>::Id,
         content: &str,
     ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
+
+    async fn get_channel(
+        &self,
+        channel_id: &<Self::Api as PluxerApi>::Id,
+    ) -> Result<<Self::Api as PluxerApi>::Channel, <Self::Api as PluxerApi>::Error>;
 }
