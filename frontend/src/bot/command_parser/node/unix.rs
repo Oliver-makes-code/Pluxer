@@ -54,12 +54,9 @@ impl UnixParameter {
                         continue;
                     }
 
-                    let value = match parse_string(parser) {
-                        Some(value) => value,
-                        None => {
-                            parser.cursor.rollback();
-                            return None;
-                        }
+                    let Some(value) = parse_string(parser) else {
+                        parser.cursor.rollback();
+                        return None;
                     };
 
                     let argument_span = parser.cursor.commit();

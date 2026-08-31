@@ -14,47 +14,47 @@ pub mod literal;
 pub mod string;
 pub mod unix;
 
-fn parse_quoted<'a>(context: &mut CommandParser<'a>, quote: char) -> Option<Spanned<'a, &'a str>> {
-    if !context.cursor.consume_char(quote) {
+fn parse_quoted<'a>(parser: &mut CommandParser<'a>, quote: char) -> Option<Spanned<'a, &'a str>> {
+    if !parser.cursor.consume_char(quote) {
         return None;
     }
 
-    while !context.cursor.consume_char(quote) {
-        if context.cursor.is_eof() {
-            context.cursor.rollback();
+    while !parser.cursor.consume_char(quote) {
+        if parser.cursor.is_eof() {
+            parser.cursor.rollback();
             return None;
         }
 
-        if context.cursor.consume_char('\\') {
-            context.cursor.advance();
+        if parser.cursor.consume_char('\\') {
+            parser.cursor.advance();
         } else {
-            context.cursor.advance();
+            parser.cursor.advance();
         }
     }
 
-    let span = context.cursor.commit();
+    let span = parser.cursor.commit();
     let slice = span.slice();
 
     return Some(span.into_spanned(&slice[1..slice.len() - 1]));
 }
 
-fn parse_string<'a>(context: &mut CommandParser<'a>) -> Option<Spanned<'a, &'a str>> {
-    if context.cursor.is_eof() {
+fn parse_string<'a>(parser: &mut CommandParser<'a>) -> Option<Spanned<'a, &'a str>> {
+    if parser.cursor.is_eof() {
         return None;
     }
 
-    if let Some(quote) = parse_quoted(context, '"') {
+    if let Some(quote) = parse_quoted(parser, '"') {
         return Some(quote);
     }
 
-    if let Some(quote) = parse_quoted(context, '\'') {
+    if let Some(quote) = parse_quoted(parser, '\'') {
         return Some(quote);
     }
 
-    if !context.cursor.is_fn(char::is_whitespace) {
-        context.cursor.while_fn(|c| !c.is_whitespace());
+    if !parser.cursor.is_fn(char::is_whitespace) {
+        parser.cursor.while_fn(|c| !c.is_whitespace());
 
-        let span = context.cursor.commit();
+        let span = parser.cursor.commit();
 
         let slice = span.slice();
 

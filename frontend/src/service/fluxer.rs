@@ -7,7 +7,7 @@ use pluxer_backend::fluxer::{
         client::{ClientOptions, typed_events::DispatchEvent},
     },
     fluxer_rest::RestOptions,
-    fluxer_types::{ApiInstance, ApiUser, Routes},
+    fluxer_types::{ApiUser, Routes},
 };
 
 use crate::bot::PluxerContext;
