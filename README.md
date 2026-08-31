@@ -22,4 +22,4 @@ Available under the Mozilla Public License, version 2.0, you can use, distribute
 
 ## Stance on LLMs
 
-Pluxer does not use LLMs in the production of code, and will not accept any clearly LLM generated or assisted pull requests.
+Pluxer does not use LLMs in the production of code, and will not accept any LLM generated or assisted pull requests.
