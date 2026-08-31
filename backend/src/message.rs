@@ -1,11 +1,11 @@
 use crate::PluxerApi;
 
-pub trait BackendMessage {
+pub trait BackendMessage: Send + Sync {
     type Api: PluxerApi;
 
     fn id(&self) -> &<Self::Api as PluxerApi>::Id;
 
-    fn channel_id(&self) -> Option<&<Self::Api as PluxerApi>::Id>;
+    fn channel_id(&self) -> &<Self::Api as PluxerApi>::Id;
 
     fn content(&self) -> &str;
 

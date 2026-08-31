@@ -1,3 +1,5 @@
+#![feature(checked_type_aliases)]
+
 use std::fs;
 
 use serde::{Deserialize, Serialize};

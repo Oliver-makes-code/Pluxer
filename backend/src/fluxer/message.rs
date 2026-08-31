@@ -18,7 +18,7 @@ impl BackendMessage for Message {
         return self.webhook_id.is_some() || self.author.is_bot();
     }
 
-    fn channel_id(&self) -> Option<&Snowflake> {
-        return Some(&self.channel_id);
+    fn channel_id(&self) -> &Snowflake {
+        return &self.channel_id;
     }
 }

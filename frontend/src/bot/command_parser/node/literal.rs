@@ -1,4 +1,4 @@
-use crate::bot::command::{CommandParser, cursor::SourceSpan, node::CommandArgument};
+use crate::bot::command_parser::{CommandParser, cursor::SourceSpan, node::CommandArgument};
 
 pub struct LiteralArgument {
     pub literals: &'static [&'static str],

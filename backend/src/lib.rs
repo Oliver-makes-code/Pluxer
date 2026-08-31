@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use crate::{
     bot::BackendBot, channel::BackendChannel, id::BackendId, message::BackendMessage,
     user::BackendUser,
@@ -12,8 +14,8 @@ pub mod user;
 #[cfg(feature = "fluxer")]
 pub mod fluxer;
 
-pub trait PluxerApi {
-    type Error;
+pub trait PluxerApi: Send + Sync {
+    type Error: Error + Send + Sync + 'static;
     type Id: BackendId<Api = Self>;
     type Bot: BackendBot<Api = Self>;
     type User: BackendUser<Api = Self>;

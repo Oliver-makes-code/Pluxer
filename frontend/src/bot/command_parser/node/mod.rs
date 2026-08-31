@@ -1,5 +1,7 @@
-use crate::bot::command::{
-    CommandExecutor, CommandParser, cursor::{SourceSpan, Spanned}, node::{
+use crate::bot::command_parser::{
+    CommandContext, CommandExecutor, CommandParser,
+    cursor::{SourceSpan, Spanned},
+    node::{
         greedy::GreedyStringArgument,
         literal::LiteralArgument,
         string::{StringArgument, StringListArgument},
@@ -86,8 +88,8 @@ impl CommandArgument for CommandArgumentKind {
     }
 }
 
-pub struct CommandNode<C> {
+pub struct CommandNode<C: CommandContext> {
     pub argument: CommandArgumentKind,
     pub children: Box<[CommandNode<C>]>,
-    pub executes: Option<CommandExecutor<C>>,
+    pub executes: Option<Box<dyn CommandExecutor<C>>>,
 }

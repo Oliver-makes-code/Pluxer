@@ -1,18 +1,23 @@
-use crate::bot::command::{CommandExecutor, node::{
-    CommandArgumentKind, CommandNode,
-    greedy::GreedyStringArgument,
-    literal::LiteralArgument,
-    string::{StringArgument, StringListArgument},
-    unix::{UnixArgument, UnixParameter},
-}};
+use std::pin::Pin;
 
-pub struct CommandBuilder<C> {
+use crate::bot::command_parser::{
+    CommandArguments, CommandContext, CommandExecutor,
+    node::{
+        CommandArgumentKind, CommandNode,
+        greedy::GreedyStringArgument,
+        literal::LiteralArgument,
+        string::{StringArgument, StringListArgument},
+        unix::{UnixArgument, UnixParameter},
+    },
+};
+
+pub struct CommandBuilder<C: CommandContext> {
     argument: Option<CommandArgumentKind>,
     children: Vec<CommandBuilder<C>>,
-    executes: Option<CommandExecutor<C>>,
+    executes: Option<Box<dyn CommandExecutor<C>>>,
 }
 
-impl<C> CommandBuilder<C> {
+impl<C: CommandContext> CommandBuilder<C> {
     fn build_internal<F: FnOnce(&mut Self)>(argument: Option<CommandArgumentKind>, f: F) -> Self {
         let mut builder = Self {
             argument,
@@ -47,48 +52,74 @@ impl<C> CommandBuilder<C> {
         return Self::children_into_nodes(builder.children);
     }
 
-    pub fn executes(&mut self, executes: CommandExecutor<C>) {
-        self.executes = Some(executes);
+    pub fn executes(&mut self, executes: impl CommandExecutor<C> + 'static) {
+        self.executes = Some(Box::new(executes));
     }
 
-    pub fn literal<F: FnOnce(&mut Self)>(&mut self, literals: &'static [&'static str], f: F) {
+    pub fn literal<F: FnOnce(&mut Self)>(
+        &mut self,
+        literals: &'static [&'static str],
+        f: F,
+    ) -> &mut Self {
         self.children.push(Self::build_internal(
             Some(CommandArgumentKind::Literal(LiteralArgument { literals })),
             f,
         ));
+
+        return self;
     }
 
-    pub fn string<F: FnOnce(&mut Self)>(&mut self, argument_name: &'static str, f: F) {
+    pub fn string<F: FnOnce(&mut Self)>(&mut self, argument_name: &'static str, f: F) -> &mut Self {
         self.children.push(Self::build_internal(
             Some(CommandArgumentKind::String(StringArgument {
                 argument_name,
             })),
             f,
         ));
+
+        return self;
     }
 
-    pub fn string_list<F: FnOnce(&mut Self)>(&mut self, argument_name: &'static str, f: F) {
+    pub fn string_list<F: FnOnce(&mut Self)>(
+        &mut self,
+        argument_name: &'static str,
+        f: F,
+    ) -> &mut Self {
         self.children.push(Self::build_internal(
             Some(CommandArgumentKind::StringList(StringListArgument {
                 argument_name,
             })),
             f,
         ));
+
+        return self;
     }
 
-    pub fn greedy_string<F: FnOnce(&mut Self)>(&mut self, argument_name: &'static str, f: F) {
+    pub fn greedy_string<F: FnOnce(&mut Self)>(
+        &mut self,
+        argument_name: &'static str,
+        f: F,
+    ) -> &mut Self {
         self.children.push(Self::build_internal(
             Some(CommandArgumentKind::GreedyString(GreedyStringArgument {
                 argument_name,
             })),
             f,
         ));
+
+        return self;
     }
 
-    pub fn unix<F: FnOnce(&mut Self)>(&mut self, arguments: &'static [UnixParameter], f: F) {
+    pub fn unix<F: FnOnce(&mut Self)>(
+        &mut self,
+        arguments: &'static [UnixParameter],
+        f: F,
+    ) -> &mut Self {
         self.children.push(Self::build_internal(
             Some(CommandArgumentKind::Unix(UnixArgument { arguments })),
             f,
         ));
+
+        return self;
     }
 }

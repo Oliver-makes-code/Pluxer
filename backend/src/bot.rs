@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crate::PluxerApi;
 
 #[async_trait]
-pub trait BackendBot {
+pub trait BackendBot: Send + Sync {
     type Api: PluxerApi;
 
     async fn send_message(

@@ -126,7 +126,7 @@ impl<'a> SourceCursor<'a> {
     }
 
     pub fn is_eof_or_fn<F: Fn(char) -> bool>(&self, f: F) -> bool {
-        return self.current().is_some_and(f);
+        return self.current().is_none_or(f);
     }
 
     pub fn consume_until_eof(&mut self) {

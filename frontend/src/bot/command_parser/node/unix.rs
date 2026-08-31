@@ -1,4 +1,4 @@
-use crate::bot::command::{
+use crate::bot::command_parser::{
     CommandParser,
     cursor::SourceSpan,
     node::{CommandArgument, parse_string},

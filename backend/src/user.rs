@@ -1,6 +1,6 @@
 use crate::PluxerApi;
 
-pub trait BackendUser {
+pub trait BackendUser: Send + Sync {
     type Api: PluxerApi;
 
     fn id(&self) -> &<Self::Api as PluxerApi>::Id;
