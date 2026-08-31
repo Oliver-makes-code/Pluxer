@@ -15,3 +15,6 @@ Pluxer is still in development. Our goal is to reach feature parity with PluralK
 
 **Pluxer is Free and Open Source software**
 Available under the Mozilla Public License, version 2.0, you can use, distribute, or modify Pluxer, so long as you follow the terms of the license.
+
+**Stance on LLMs**
+Pluxer does not use LLMs in the production of code, and will not accept any clearly LLM generated or assisted pull requests.
