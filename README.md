@@ -23,3 +23,16 @@ Available under the Mozilla Public License, version 2.0, you can use, distribute
 ## Stance on LLMs
 
 Pluxer does not use LLMs in the production of code, and will not accept any LLM generated or assisted pull requests.
+
+## Repository structure
+
+`./database` contains the database model.
+
+`./backend` is an abstraction layer over what's necessary to create a bot.
+
+`./frontend` contains the bot implementation, built on top of backend abstraction. 
+
+### Why have an abstraction layer?
+
+In the future, I want Pluxer to be able to support more platforms than just Fluxer.
+Having an abstraction layer set up makes that goal easier.

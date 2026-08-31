@@ -1,0 +1,17 @@
+[package]
+name = "pluxer-frontend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+pluxer-backend.workspace = true
+pluxer-database.workspace = true
+tokio = { workspace = true, features = ["macros"] }
+
+fluxer-builders.workspace = true
+fluxer-core.workspace = true
+fluxer-rest.workspace = true
+fluxer-types.workspace = true
+fluxer-util.workspace = true
+fluxer-ws.workspace = true
+dotenv = "0.15.0"

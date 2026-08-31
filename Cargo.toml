@@ -1,15 +1,22 @@
 [workspace]
 resolver = "3"
 
-members = ["backend",
-    "database"
-, "frontend/fluxer"]
+members = ["backend", "database", "frontend"]
 
 [workspace.dependencies]
 pluxer-database.path = "./database"
 pluxer-backend.path = "./backend"
 
 ulid = "3.0.0"
+async-trait = "0.1.92"
+
+fluxer-builders = "0.3.1"
+fluxer-core.version = "0.3.1"
+fluxer-core.default-features = false
+fluxer-rest = "0.3.1"
+fluxer-types = "0.3.1"
+fluxer-util = "0.3.1"
+fluxer-ws = "0.3.1"
 
 sea-orm = { version = "2.0.2", features = [
     "sqlx-sqlite",

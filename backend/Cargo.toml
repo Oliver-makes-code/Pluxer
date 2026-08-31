@@ -4,4 +4,27 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-pluxer-database.workspace = true
+async-trait.workspace = true
+
+fluxer-builders.workspace = true
+fluxer-builders.optional = true
+
+fluxer-core.workspace = true
+fluxer-core.optional = true
+
+fluxer-rest.workspace = true
+fluxer-rest.optional = true
+
+fluxer-types.workspace = true
+fluxer-types.optional = true
+
+fluxer-util.workspace = true
+fluxer-util.optional = true
+
+fluxer-ws.workspace = true
+fluxer-ws.optional = true
+
+[features]
+default = ["fluxer"]
+
+fluxer = ["fluxer-builders", "fluxer-core", "fluxer-rest", "fluxer-types", "fluxer-util", "fluxer-ws"]
