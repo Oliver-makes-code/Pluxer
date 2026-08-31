@@ -13,7 +13,11 @@ mod fluxer;
 #[serde(tag = "service")]
 pub enum PluxerService {
     #[cfg(feature = "fluxer")]
-    Fluxer { api_endpoint: Arc<str>, token: Arc<str>, instance_name: Arc<str> },
+    Fluxer {
+        api_endpoint: Arc<str>,
+        token: Arc<str>,
+        instance_name: Arc<str>,
+    },
     #[serde(other)]
     Disabled,
 }

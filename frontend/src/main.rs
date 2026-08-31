@@ -1,6 +1,5 @@
 use std::fs;
 
-use dotenv::dotenv;
 use serde::{Deserialize, Serialize};
 
 use crate::service::PluxerService;

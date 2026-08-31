@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use pluxer_backend::fluxer::{
-    FluxerApi, fluxer_core::{
+    FluxerApi,
+    fluxer_core::{
         Client, Error,
         client::{ClientOptions, typed_events::DispatchEvent},
-    }, fluxer_rest::RestOptions, fluxer_types::{ApiInstance, ApiUser, Routes},
+    },
+    fluxer_rest::RestOptions,
+    fluxer_types::{ApiInstance, ApiUser, Routes},
 };
 
 use crate::bot::PluxerContext;
@@ -32,9 +35,16 @@ pub async fn run(api_url: &str, token: &str, instance_name: Arc<str>) -> Result<
         async move {
             match event {
                 DispatchEvent::Ready => {
-                    let user = context.bot.get::<ApiUser>(Routes::current_user()).await.unwrap();
+                    let user = context
+                        .bot
+                        .get::<ApiUser>(Routes::current_user())
+                        .await
+                        .unwrap();
 
-                    println!("{}: User '{}' ({}) ready!", instance_name, user.username, user.id);
+                    println!(
+                        "{}: User '{}' ({}) ready!",
+                        instance_name, user.username, user.id
+                    );
                 }
 
                 DispatchEvent::MessageCreate { message, .. } => {
