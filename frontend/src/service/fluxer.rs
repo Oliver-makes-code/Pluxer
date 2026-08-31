@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
-use fluxer_core::{
-    Client,
-    client::{ClientOptions, typed_events::DispatchEvent},
+use pluxer_backend::fluxer::{
+    FluxerApi, fluxer_core::{
+        Client, Error,
+        client::{ClientOptions, typed_events::DispatchEvent},
+    }, fluxer_rest::RestOptions, fluxer_types::{ApiInstance, ApiUser, Routes},
 };
-use fluxer_rest::RestOptions;
-use pluxer_backend::fluxer::FluxerApi;
 
 use crate::bot::PluxerContext;
 
-pub async fn run(api_url: &str, token: &str) {
+pub async fn run(api_url: &str, token: &str, instance_name: Arc<str>) -> Result<(), Error> {
     let options = ClientOptions {
         intents: 0,
         wait_for_guilds: true,
@@ -27,10 +27,14 @@ pub async fn run(api_url: &str, token: &str) {
 
     client.on_typed(move |event| {
         let context = context.clone();
+        let instance_name = instance_name.clone();
+
         async move {
             match event {
                 DispatchEvent::Ready => {
-                    println!("Ready!");
+                    let user = context.bot.get::<ApiUser>(Routes::current_user()).await.unwrap();
+
+                    println!("{}: User '{}' ({}) ready!", instance_name, user.username, user.id);
                 }
 
                 DispatchEvent::MessageCreate { message, .. } => {
@@ -42,7 +46,5 @@ pub async fn run(api_url: &str, token: &str) {
         }
     });
 
-    if let Err(e) = client.login(token).await {
-        eprintln!("{}", e);
-    }
+    return client.login(token).await;
 }

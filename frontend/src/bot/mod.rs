@@ -1,7 +1,7 @@
 use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage};
 
 pub struct PluxerContext<A: PluxerApi> {
-    bot: A::Bot,
+    pub bot: A::Bot,
 }
 
 impl<A: PluxerApi> PluxerContext<A> {

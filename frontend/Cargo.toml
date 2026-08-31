@@ -7,11 +7,12 @@ edition = "2024"
 pluxer-backend.workspace = true
 pluxer-database.workspace = true
 tokio = { workspace = true, features = ["macros"] }
+dotenv.workspace = true
+serde = { version = "1.0.229", features = ["derive"] }
+thiserror = "2.0.20"
+serde_json = "1.0.151"
+anyhow = "1.0.104"
 
-fluxer-builders.workspace = true
-fluxer-core.workspace = true
-fluxer-rest.workspace = true
-fluxer-types.workspace = true
-fluxer-util.workspace = true
-fluxer-ws.workspace = true
-dotenv = "0.15.0"
+[features]
+default = ["fluxer"]
+fluxer = ["pluxer-backend/fluxer"]

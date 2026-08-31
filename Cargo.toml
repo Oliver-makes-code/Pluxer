@@ -17,6 +17,7 @@ fluxer-rest = "0.3.1"
 fluxer-types = "0.3.1"
 fluxer-util = "0.3.1"
 fluxer-ws = "0.3.1"
+dotenv = "0.15.0"
 
 sea-orm = { version = "2.0.2", features = [
     "sqlx-sqlite",
