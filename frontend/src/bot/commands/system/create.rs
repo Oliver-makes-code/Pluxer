@@ -19,8 +19,8 @@ impl CreateSystemCommand {
         command.literal(&["new", "n", "create", "c", "make"], |command| {
             command.executes(CreateSystemCommand);
 
-            command.string(Self::NAME, |command| {
-                command.unix(&Self::UNIX_PARAMETERS, |_| {});
+            command.unix(&Self::UNIX_PARAMETERS, |command| {
+                command.greedy_string(Self::NAME, |_| {});
             });
         });
     }
