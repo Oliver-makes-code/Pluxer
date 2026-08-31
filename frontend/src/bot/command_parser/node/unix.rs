@@ -20,6 +20,22 @@ pub struct UnixArgument {
 }
 
 impl UnixParameter {
+    pub const fn flag(name: &'static str, aliases: &'static [&'static str]) -> Self {
+        return Self {
+            name,
+            aliases,
+            kind: UnixParameterKind::Flag
+        };
+    }
+
+    pub const fn value(name: &'static str, aliases: &'static [&'static str]) -> Self {
+        return Self {
+            name,
+            aliases,
+            kind: UnixParameterKind::Value
+        };
+    }
+    
     fn parse<'a>(&self, parser: &mut CommandParser<'a>) -> Option<SourceSpan<'a>> {
         for alias in self.aliases {
             if !parser.cursor.consume_str(alias) {
@@ -54,18 +70,20 @@ impl UnixParameter {
                         continue;
                     }
 
+                    let param_span = parser.cursor.commit();
+
                     let Some(value) = parse_string(parser) else {
                         parser.cursor.rollback();
                         return None;
                     };
 
-                    let argument_span = parser.cursor.commit();
+                    let span = value.span + param_span;
 
                     parser
                         .arguments
-                        .insert(self.name, argument_span.into_spanned(Box::new([value])));
+                        .insert(self.name, span.into_spanned(Box::new([value])));
 
-                    return Some(argument_span);
+                    return Some(span);
                 }
             }
         }
@@ -105,6 +123,7 @@ impl CommandArgument for UnixArgument {
             }
         }
 
-        return span;
+        // We want unix to always return.
+        return Some(span.unwrap_or_else(|| context.cursor.commit()));
     }
 }

@@ -2,9 +2,10 @@ use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
 use crate::bot::{
-    PluxerContext,
-    command_parser::{CommandArguments, CommandExecutor, CommandRoot, builder::CommandBuilder},
+    PluxerContext, command_parser::{CommandArguments, CommandExecutor, CommandRoot, builder::CommandBuilder}, commands::system::SystemCommand,
 };
+
+mod system;
 
 pub struct TestCommand;
 
@@ -27,12 +28,6 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for TestCommand {
 
 pub fn create_command_tree<'a, A: PluxerApi>() -> CommandRoot<PluxerContext<A>> {
     return CommandBuilder::<PluxerContext<A>>::build(|command| {
-        command.literal(&["test"], |test| {
-            test.string("test", |test| {
-                test.executes(TestCommand);
-            });
-
-            test.executes(TestCommand);
-        });
+        SystemCommand::append(command);
     });
 }
