@@ -212,14 +212,51 @@ pub trait DatabaseExtension: PluxerApi + Sized {
 
     async fn fetch_member_by_id(
         context: &PluxerContext<Self>,
-        system_id: Ulid,
         member_id: Ulid,
     ) -> Result<Option<MemberModel>, DbErr> {
         let member = member::Entity::find_by_id(DatabaseId::from(member_id))
-            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
             .one(&context.database_connection)
             .await?;
 
         return Ok(member.map(Into::into));
+    }
+
+    async fn update_member_by_id(
+        context: &PluxerContext<Self>,
+        member_id: Ulid,
+        name: DatabaseUpdate<&str>,
+        display_name: DatabaseUpdate<Option<&str>>,
+        avatar_url: DatabaseUpdate<Option<&str>>,
+        description: DatabaseUpdate<Option<&str>>,
+        color: DatabaseUpdate<Option<u32>>,
+    ) -> Result<(), DbErr> {
+        let member = member::ActiveModel {
+            id: ActiveValue::Set(DatabaseId::from(member_id)),
+
+            id_hash: ActiveValue::NotSet,
+            system_id: ActiveValue::NotSet,
+
+            name: name.map(str::to_ascii_lowercase).into(),
+            display_name: display_name.map(|it| it.map(ToString::to_string)).into(),
+
+            description: description.map(|it| it.map(ToString::to_string)).into(),
+            avatar_url: avatar_url.map(|it| it.map(ToString::to_string)).into(),
+            color: color.map(|it| it.map(|it| it as i32)).into(),
+
+            created_at: ActiveValue::NotSet,
+            updated_at: ActiveValue::Set(DateTime::default()),
+        };
+
+        member.update(&context.database_connection).await?;
+
+        return Ok(());
+    }
+
+    async fn delete_member(context: &PluxerContext<Self>, member_id: Ulid) -> Result<(), DbErr> {
+        member::Entity::delete_by_id(DatabaseId::from(member_id))
+            .exec(&context.database_connection)
+            .await?;
+
+        return Ok(());
     }
 }
