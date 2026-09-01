@@ -12,10 +12,13 @@ use ulid::Ulid;
 
 use crate::{
     bot::{
-        PluxerContext, command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single, node::unix::UnixParameter,
+        PluxerContext,
+        command_parser::{
+            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
+            node::unix::UnixParameter,
         },
-    }, database::DatabaseExtension,
+    },
+    database::DatabaseExtension,
 };
 
 pub struct CreateSystemCommand;
@@ -49,14 +52,15 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let system_id = A::get_system_id(context, message.author().id()).await?;
+        let system_id = A::fetch_system_id(context, message.author().id()).await?;
 
         if system_id.is_some() {
             context
                 .bot
                 .send_message(
                     message.channel_id(),
-                    "You have already created a system. View it with `pl!system`".into(),
+                    Some("You have already created a system. View it with `pl!system`".into()),
+                    None,
                 )
                 .await?;
 
@@ -68,7 +72,8 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                 .bot
                 .send_message(
                     message.channel_id(),
-                    "Cannot create a sytem without specifying a name.".into(),
+                    Some("Cannot create a sytem without specifying a name.".into()),
+                    None,
                 )
                 .await?;
 
@@ -79,13 +84,18 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
 
         let avatar_url = get_argument_single(args, Self::AVATAR_URL);
 
-        let system_id = A::create_system(context, message.author().id(), name, avatar_url, tag).await?;
+        let system_id =
+            A::create_system(context, message.author().id(), name, avatar_url, tag).await?;
 
         context
             .bot
             .send_message(
                 message.channel_id(),
-                format!("System created! View it with `pl!system`\n-# System ID: {}", system_id),
+                Some(format!(
+                    "System created! View it with `pl!system`\n-# System ID: {}",
+                    system_id
+                )),
+                None,
             )
             .await?;
 

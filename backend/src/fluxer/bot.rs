@@ -4,15 +4,21 @@ use fluxer_core::{Channel, Error, Message};
 use fluxer_rest::Rest;
 use fluxer_types::{ApiChannel, ApiMessage, Routes, Snowflake};
 
-use crate::{bot::BackendBot, fluxer::FluxerApi};
+use crate::{bot::BackendBot, embed::Embed, fluxer::FluxerApi};
 
 #[async_trait]
 impl BackendBot for Rest {
     type Api = FluxerApi;
 
-    async fn send_message(&self, channel_id: &Snowflake, content: String) -> Result<Message, Error> {
+    async fn send_message(
+        &self,
+        channel_id: &Snowflake,
+        content: Option<String>,
+        embed: Option<Embed>,
+    ) -> Result<Message, Error> {
         let payload = MessagePayloadData {
-            content: Some(content),
+            content: content,
+            embeds: embed.map(Into::into).map(|it| vec![it]),
             ..Default::default()
         };
 

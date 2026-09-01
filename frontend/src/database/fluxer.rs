@@ -14,7 +14,7 @@ use crate::{bot::PluxerContext, database::DatabaseExtension};
 
 #[async_trait]
 impl DatabaseExtension for FluxerApi {
-    async fn get_system_id(
+    async fn fetch_system_id(
         context: &PluxerContext<Self>,
         user_id: &<Self as PluxerApi>::Id,
     ) -> Result<Option<Ulid>, DbErr> {

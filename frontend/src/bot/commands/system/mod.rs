@@ -1,4 +1,4 @@
-use pluxer_backend::PluxerApi;
+use pluxer_backend::{PluxerApi, bot::BackendBot, embed::{Embed, EmbedField}, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
 use crate::{
@@ -32,6 +32,47 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
+        let Some(system) = A::fetch_system_by_user(context, message.author().id()).await? else {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some("You do not have a system. Create one with `pl!system new <name>`".into()),
+                    None,
+                )
+                .await?;
+
+            return Ok(());
+        };
+
+        let mut fields = vec![];
+
+        if let Some(tag) = system.tag {
+            fields.push(EmbedField {
+                name: "Tag".into(),
+                value: tag,
+                inline: true
+            });
+        }
+
+        let embed = Embed {
+            title: Some(system.name),
+            description: system.description,
+            fields,
+            footer: Some(format!("System ID: {}", system.id)),
+            color: 0xFFFFFF,
+        };
+
+        context
+            .bot
+            .send_message(
+                message.channel_id(),
+                None,
+                Some(embed),
+            )
+            .await?;
+
+
         return Ok(());
     }
 }

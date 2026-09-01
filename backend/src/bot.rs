@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::PluxerApi;
+use crate::{PluxerApi, embed::Embed};
 
 #[async_trait]
 pub trait BackendBot: Send + Sync {
@@ -9,7 +9,8 @@ pub trait BackendBot: Send + Sync {
     async fn send_message(
         &self,
         channel_id: &<Self::Api as PluxerApi>::Id,
-        content: String,
+        content: Option<String>,
+        embed: Option<Embed>,
     ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
 
     async fn get_channel(

@@ -13,6 +13,7 @@ pub use fluxer_ws;
 
 mod bot;
 mod channel;
+mod embed;
 mod id;
 mod message;
 mod user;
