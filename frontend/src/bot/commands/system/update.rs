@@ -48,10 +48,7 @@ impl UpdateSystemCommand {
             return "pl!system update [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--name=\"<name>\"]".into();
         };
 
-        return format!(
-            "pl!system {0} <{0}>",
-            subcommand,
-        );
+        return format!("pl!system {0} <{0}>", subcommand,);
     }
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
@@ -182,16 +179,25 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateSystemCom
         let name = get_argument_single(args, SystemCommand::NAME)
             .map_or(DatabaseUpdate::Keep, DatabaseUpdate::Set);
 
-        A::update_system_by_id(context, system_id, name, tag, avatar_url, description).await?;
-            context
-                .bot
-                .send_message(
-                    message.channel_id(),
-                    Some("System info updated! View it with `pl!system`".into()),
-                    None,
-                    Some(message),
-                )
-                .await?;
+        A::update_system_by_id(
+            context,
+            system_id,
+            name,
+            tag,
+            avatar_url,
+            description,
+            DatabaseUpdate::Keep,
+        )
+        .await?;
+        context
+            .bot
+            .send_message(
+                message.channel_id(),
+                Some("System info updated! View it with `pl!system`".into()),
+                None,
+                Some(message),
+            )
+            .await?;
 
         return Ok(());
     }

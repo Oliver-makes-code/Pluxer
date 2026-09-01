@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Systems::Description).string())
                     .col(ColumnDef::new(Systems::AvatarUrl).string())
                     .col(ColumnDef::new(Systems::Timezone).string())
+                    .col(ColumnDef::new(Systems::Color).integer())
                     .col(
                         ColumnDef::new(Systems::CreatedAt)
                             .timestamp_with_time_zone()
@@ -37,11 +38,13 @@ impl MigrationTrait for Migration {
                     .table(Members::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(Members::Id).uuid().not_null().primary_key())
+                    .col(ColumnDef::new(Members::IdHash).integer().not_null())
                     .col(ColumnDef::new(Members::SystemId).uuid().not_null())
                     .col(ColumnDef::new(Members::Name).string().not_null())
                     .col(ColumnDef::new(Members::DisplayName).string())
                     .col(ColumnDef::new(Members::Description).string())
                     .col(ColumnDef::new(Members::AvatarUrl).string())
+                    .col(ColumnDef::new(Members::Color).integer())
                     .col(
                         ColumnDef::new(Members::CreatedAt)
                             .timestamp_with_time_zone()
@@ -60,6 +63,20 @@ impl MigrationTrait for Migration {
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
                     )
+                    .index(
+                        Index::create()
+                            .name("uq-members-system-id-hash")
+                            .col(Members::SystemId)
+                            .col(Members::IdHash)
+                            .unique(),
+                    )
+                    .index(
+                        Index::create()
+                            .name("uq-members-system-name")
+                            .col(Members::SystemId)
+                            .col(Members::Name)
+                            .unique(),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -71,8 +88,8 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(Proxies::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Proxies::MemberId).uuid().not_null())
-                    .col(ColumnDef::new(Proxies::Prefix).string())
-                    .col(ColumnDef::new(Proxies::Suffix).string())
+                    .col(ColumnDef::new(Proxies::SystemId).uuid().not_null())
+                    .col(ColumnDef::new(Proxies::Proxy).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk-proxies-member")
@@ -80,6 +97,21 @@ impl MigrationTrait for Migration {
                             .to(Members::Table, Members::Id)
                             .on_delete(ForeignKeyAction::Cascade)
                             .on_update(ForeignKeyAction::Cascade),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk-proxies-system")
+                            .from(Proxies::Table, Proxies::SystemId)
+                            .to(Systems::Table, Systems::Id)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Cascade),
+                    )
+                    .index(
+                        Index::create()
+                            .name("uq-proxies-system")
+                            .col(Proxies::SystemId)
+                            .col(Proxies::Proxy)
+                            .unique(),
                     )
                     .to_owned(),
             )
@@ -145,12 +177,14 @@ enum Systems {
     Timezone,
     CreatedAt,
     UpdatedAt,
+    Color,
 }
 
 #[derive(DeriveIden)]
 enum Members {
     Table,
     Id,
+    IdHash,
     SystemId,
     Name,
     DisplayName,
@@ -158,6 +192,7 @@ enum Members {
     AvatarUrl,
     CreatedAt,
     UpdatedAt,
+    Color,
 }
 
 #[derive(DeriveIden)]
@@ -165,8 +200,8 @@ enum Proxies {
     Table,
     Id,
     MemberId,
-    Prefix,
-    Suffix,
+    SystemId,
+    Proxy,
 }
 
 #[derive(DeriveIden)]

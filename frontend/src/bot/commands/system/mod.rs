@@ -47,7 +47,24 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system) = A::fetch_system_by_user(context, message.author().id()).await? else {
+        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some(format!(
+                        "You do not have a system. Create one with `{}`",
+                        CreateSystemCommand::USAGE
+                    )),
+                    None,
+                    Some(message),
+                )
+                .await?;
+
+            return Ok(());
+        };
+
+        let Some(system) = A::fetch_system_by_id(context, system_id).await? else {
             context
                 .bot
                 .send_message(

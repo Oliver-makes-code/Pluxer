@@ -15,6 +15,7 @@ pub struct Model {
     pub description: Option<String>,
     pub avatar_url: Option<String>,
     pub timezone: Option<String>,
+    pub color: Option<i32>,
 
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,
@@ -26,6 +27,8 @@ pub enum Relation {
     FluxerUsers,
     #[sea_orm(has_many = "super::member::Entity")]
     Members,
+    #[sea_orm(has_many = "super::proxy::Entity")]
+    Proxies,
 }
 
 impl Related<super::user::fluxer::Entity> for Entity {
@@ -37,6 +40,12 @@ impl Related<super::user::fluxer::Entity> for Entity {
 impl Related<super::member::Entity> for Entity {
     fn to() -> RelationDef {
         return Relation::Members.def();
+    }
+}
+
+impl Related<super::proxy::Entity> for Entity {
+    fn to() -> RelationDef {
+        return Relation::Proxies.def();
     }
 }
 

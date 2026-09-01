@@ -7,6 +7,7 @@ use crate::entities::DatabaseId;
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: DatabaseId,
+    pub id_hash: i32,
 
     pub system_id: DatabaseId,
 
@@ -15,6 +16,7 @@ pub struct Model {
 
     pub description: Option<String>,
     pub avatar_url: Option<String>,
+    pub color: Option<i32>,
 
     pub created_at: DateTimeUtc,
     pub updated_at: DateTimeUtc,

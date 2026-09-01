@@ -2,7 +2,7 @@ use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 use std::time::Duration;
 
-use crate::migrations::{self, _2026_08_31_initial};
+use crate::migrations::{self};
 
 pub async fn connect(url: &str) -> Result<DatabaseConnection, sea_orm::DbErr> {
     let mut options = ConnectOptions::new(url);

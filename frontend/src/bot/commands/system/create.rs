@@ -92,6 +92,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
             description,
             tag,
             avatar_url,
+            None,
         )
         .await?;
 

@@ -1,13 +1,14 @@
 use pluxer_backend::PluxerApi;
 use pluxer_database::{
-    entities::{DatabaseId, system, user},
-    model::system::SystemModel,
+    entities::{DatabaseId, member, system, user},
+    model::{member::MemberModel, system::SystemModel},
     sea_orm::{
         ActiveModelTrait, ActiveValue, ColumnTrait, DbErr, EntityTrait, PaginatorTrait,
         QueryFilter, entity::prelude::async_trait::async_trait, sqlx::types::chrono::DateTime,
     },
 };
 use ulid::Ulid;
+use xxhash_rust::xxh3::xxh3_64;
 
 use crate::bot::PluxerContext;
 
@@ -60,6 +61,7 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         description: Option<&str>,
         tag: Option<&str>,
         avatar_url: Option<&str>,
+        color: Option<u32>,
     ) -> Result<Ulid, DbErr> {
         let system_id = Ulid::generate();
 
@@ -69,11 +71,11 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             avatar_url: ActiveValue::Set(avatar_url.map(ToString::to_string)),
             tag: ActiveValue::Set(tag.map(ToString::to_string)),
             description: ActiveValue::Set(description.map(ToString::to_string)),
+            color: ActiveValue::Set(color.map(|it| it as i32)),
+            timezone: ActiveValue::NotSet,
 
             created_at: ActiveValue::Set(DateTime::default()),
             updated_at: ActiveValue::Set(DateTime::default()),
-
-            ..Default::default()
         };
 
         system.insert(&context.database_connection).await?;
@@ -118,17 +120,6 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         return Ok(system.map(Into::into));
     }
 
-    async fn fetch_system_by_user(
-        context: &PluxerContext<Self>,
-        user_id: &<Self as PluxerApi>::Id,
-    ) -> Result<Option<SystemModel>, DbErr> {
-        let Some(system_id) = Self::fetch_system_id(context, user_id).await? else {
-            return Ok(None);
-        };
-
-        return Self::fetch_system_by_id(context, system_id).await;
-    }
-
     async fn update_system_by_id(
         context: &PluxerContext<Self>,
         system_id: Ulid,
@@ -136,6 +127,7 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         tag: DatabaseUpdate<Option<&str>>,
         avatar_url: DatabaseUpdate<Option<&str>>,
         description: DatabaseUpdate<Option<&str>>,
+        color: DatabaseUpdate<Option<u32>>,
     ) -> Result<(), DbErr> {
         let system = system::ActiveModel {
             id: ActiveValue::Set(DatabaseId::from(system_id)),
@@ -144,6 +136,7 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             avatar_url: avatar_url.map(|it| it.map(ToString::to_string)).into(),
             tag: tag.map(|it| it.map(ToString::to_string)).into(),
             description: description.map(|it| it.map(ToString::to_string)).into(),
+            color: color.map(|it| it.map(|it| it as i32)).into(),
 
             updated_at: ActiveValue::Set(DateTime::default()),
 
@@ -155,20 +148,78 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         return Ok(());
     }
 
-    async fn update_system_by_user(
+    async fn create_member(
         context: &PluxerContext<Self>,
-        user_id: &<Self as PluxerApi>::Id,
-        name: DatabaseUpdate<&str>,
-        tag: DatabaseUpdate<Option<&str>>,
-        avatar_url: DatabaseUpdate<Option<&str>>,
-        description: DatabaseUpdate<Option<&str>>,
-    ) -> Result<(), DbErr> {
-        let Some(system_id) = Self::fetch_system_id(context, user_id).await? else {
-            return Ok(());
+        system_id: Ulid,
+        name: &str,
+        display_name: Option<&str>,
+        description: Option<&str>,
+        avatar_url: Option<&str>,
+        color: Option<u32>,
+    ) -> Result<(Ulid, u32), DbErr> {
+        let member_id = Ulid::generate();
+        let member_id_hash = xxh3_64(&member_id.to_bytes()) as u32;
+
+        let member = member::ActiveModel {
+            id: ActiveValue::Set(DatabaseId::from(member_id)),
+
+            id_hash: ActiveValue::Set(member_id_hash as i32),
+            system_id: ActiveValue::Set(DatabaseId::from(system_id)),
+
+            name: ActiveValue::Set(name.to_ascii_lowercase()),
+            display_name: ActiveValue::Set(display_name.map(ToString::to_string)),
+
+            description: ActiveValue::Set(description.map(ToString::to_string)),
+            avatar_url: ActiveValue::Set(avatar_url.map(ToString::to_string)),
+            color: ActiveValue::Set(color.map(|it| it as i32)),
+
+            created_at: ActiveValue::Set(DateTime::default()),
+            updated_at: ActiveValue::Set(DateTime::default()),
         };
 
-        Self::update_system_by_id(context, system_id, name, tag, avatar_url, description).await?;
+        member.insert(&context.database_connection).await?;
 
-        return Ok(());
+        return Ok((member_id, member_id_hash));
+    }
+
+    async fn fetch_member_by_name(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        name: &str,
+    ) -> Result<Option<MemberModel>, DbErr> {
+        let member = member::Entity::find()
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(member::Column::Name.eq(name))
+            .one(&context.database_connection)
+            .await?;
+
+        return Ok(member.map(Into::into));
+    }
+
+    async fn fetch_member_by_hash(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        id_hash: i32,
+    ) -> Result<Option<MemberModel>, DbErr> {
+        let member = member::Entity::find()
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(member::Column::IdHash.eq(id_hash))
+            .one(&context.database_connection)
+            .await?;
+
+        return Ok(member.map(Into::into));
+    }
+
+    async fn fetch_member_by_id(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+    ) -> Result<Option<MemberModel>, DbErr> {
+        let member = member::Entity::find_by_id(DatabaseId::from(member_id))
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .one(&context.database_connection)
+            .await?;
+
+        return Ok(member.map(Into::into));
     }
 }
