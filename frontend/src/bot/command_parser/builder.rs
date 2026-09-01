@@ -78,6 +78,7 @@ impl<C: CommandContext> CommandBuilder<C> {
         return self;
     }
 
+    #[allow(unused)]
     pub fn string_list<F: FnOnce(&mut Self)>(
         &mut self,
         argument_name: &'static str,

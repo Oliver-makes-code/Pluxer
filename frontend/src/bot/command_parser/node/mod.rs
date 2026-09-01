@@ -72,6 +72,7 @@ pub enum CommandArgumentKind {
     Literal(LiteralArgument),
     GreedyString(GreedyStringArgument),
     String(StringArgument),
+    #[allow(unused)]
     StringList(StringListArgument),
     Unix(UnixArgument),
 }

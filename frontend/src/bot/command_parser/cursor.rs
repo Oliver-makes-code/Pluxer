@@ -61,6 +61,7 @@ impl Display for SourcePos {
     }
 }
 
+#[allow(unused)]
 impl<'a> SourceCursor<'a> {
     pub fn new(source: &'a str, file_path: Option<&'a str>) -> Self {
         return Self {
