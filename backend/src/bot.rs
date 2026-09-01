@@ -6,6 +6,12 @@ use crate::{PluxerApi, embed::Embed};
 pub trait BackendBot: Send + Sync {
     type Api: PluxerApi;
 
+    async fn get_self_id(&self) -> Result<<Self::Api as PluxerApi>::Id, <Self::Api as PluxerApi>::Error>;
+
+    async fn fetch_webhooks(&self, channel_id: &<Self::Api as PluxerApi>::Id) -> Result<Vec<<Self::Api as PluxerApi>::Webhook>, <Self::Api as PluxerApi>::Error>;
+
+    async fn create_webhook(&self, channel_id: &<Self::Api as PluxerApi>::Id, name: &str) -> Result<<Self::Api as PluxerApi>::Webhook, <Self::Api as PluxerApi>::Error>;
+
     async fn send_message_webhook(
         &self,
         webhook: &<Self::Api as PluxerApi>::Webhook,
