@@ -1,18 +1,21 @@
+#![allow(incomplete_features)]
 #![feature(checked_type_aliases)]
 
-use std::fs;
+use std::{fs, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 
 use crate::service::PluxerService;
 
 mod bot;
+mod database;
 mod service;
 
 #[derive(Serialize, Deserialize)]
 struct PluxerConfig {
     #[serde(default)]
     pub services: Box<[PluxerService]>,
+    pub database_url: Arc<str>,
 }
 
 const CONFIG_PATH: &str = "./pluxer_config.json";
@@ -26,7 +29,7 @@ async fn main() -> anyhow::Result<()> {
     let mut services = tokio::task::JoinSet::new();
 
     for service in config.services {
-        services.spawn(service.start());
+        services.spawn(service.start(config.database_url.clone()));
     }
 
     while let Some(result) = services.join_next().await {

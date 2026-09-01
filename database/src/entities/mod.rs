@@ -36,4 +36,4 @@ impl TryFromU64 for DatabaseId {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, DeriveValueType)]
-pub struct DatabaseSnowflake(pub u64);
+pub struct DatabaseSnowflake(pub i64);

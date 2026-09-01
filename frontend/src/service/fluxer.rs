@@ -3,7 +3,7 @@ use std::sync::Arc;
 use pluxer_backend::fluxer::{
     FluxerApi,
     fluxer_core::{
-        Client, Error,
+        Client,
         client::{ClientOptions, typed_events::DispatchEvent},
     },
     fluxer_rest::RestOptions,
@@ -12,12 +12,17 @@ use pluxer_backend::fluxer::{
 
 use crate::bot::PluxerContext;
 
-pub async fn run(api_url: &str, token: &str, instance_name: Arc<str>) -> Result<(), Error> {
+pub async fn run(
+    api_url: Arc<str>,
+    token: &str,
+    instance_name: Arc<str>,
+    database_url: &str,
+) -> anyhow::Result<()> {
     let options = ClientOptions {
         intents: 0,
         wait_for_guilds: true,
         rest: Some(RestOptions {
-            api_url: api_url.into(),
+            api_url: api_url.to_string(),
             ..Default::default()
         }),
 
@@ -26,7 +31,15 @@ pub async fn run(api_url: &str, token: &str, instance_name: Arc<str>) -> Result<
 
     let mut client = Client::new(options);
 
-    let context = Arc::new(PluxerContext::<FluxerApi>::new(client.rest.clone()));
+    let context = Arc::new(
+        PluxerContext::<FluxerApi>::new(
+            client.rest.clone(),
+            &database_url,
+            instance_name.clone(),
+            api_url,
+        )
+        .await?,
+    );
 
     client.on_typed(move |event| {
         let context = context.clone();
@@ -56,5 +69,7 @@ pub async fn run(api_url: &str, token: &str, instance_name: Arc<str>) -> Result<
         }
     });
 
-    return client.login(token).await;
+    client.login(token).await?;
+
+    return Ok(());
 }

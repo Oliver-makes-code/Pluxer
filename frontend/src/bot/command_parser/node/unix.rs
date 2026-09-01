@@ -24,7 +24,7 @@ impl UnixParameter {
         return Self {
             name,
             aliases,
-            kind: UnixParameterKind::Flag
+            kind: UnixParameterKind::Flag,
         };
     }
 
@@ -32,10 +32,10 @@ impl UnixParameter {
         return Self {
             name,
             aliases,
-            kind: UnixParameterKind::Value
+            kind: UnixParameterKind::Value,
         };
     }
-    
+
     fn parse<'a>(&self, parser: &mut CommandParser<'a>) -> Option<SourceSpan<'a>> {
         for alias in self.aliases {
             if !parser.cursor.consume_str(alias) {

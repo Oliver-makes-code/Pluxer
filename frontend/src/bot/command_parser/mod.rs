@@ -33,6 +33,12 @@ pub struct CommandParser<'a> {
     pub arguments: CommandArguments<'a>,
 }
 
+pub fn get_argument_single<'a>(args: &CommandArguments<'a>, name: &'static str) -> Option<&'a str> {
+    let arg = args.get(name)?;
+
+    return arg.value.first().map(|it| it.value);
+}
+
 pub async fn parse_command<'a, C: CommandContext>(
     source: &'a str,
     root: &CommandRoot<C>,

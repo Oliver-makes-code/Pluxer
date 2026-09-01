@@ -1,7 +1,22 @@
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage};
-use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
+use pluxer_backend::{
+    PluxerApi, bot::BackendBot, id::BackendId, message::BackendMessage, user::BackendUser,
+};
+use pluxer_database::{
+    entities::{DatabaseSnowflake, system, user},
+    sea_orm::{
+        ActiveModelTrait, ActiveValue, EntityTrait, QueryFilter,
+        entity::prelude::async_trait::async_trait, sqlx::types::chrono::DateTime,
+    },
+};
+use ulid::Ulid;
 
-use crate::bot::{PluxerContext, command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder, node::unix::UnixParameter}};
+use crate::{
+    bot::{
+        PluxerContext, command_parser::{
+            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single, node::unix::UnixParameter,
+        },
+    }, database::DatabaseExtension,
+};
 
 pub struct CreateSystemCommand;
 
@@ -14,8 +29,8 @@ impl CreateSystemCommand {
         UnixParameter::value(Self::TAG, &["tag", "t"]),
         UnixParameter::value(Self::AVATAR_URL, &["avatar_url", "avatar", "a"]),
     ];
-    
-    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
+
+    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["new", "n", "create", "c", "make"], |command| {
             command.executes(CreateSystemCommand);
 
@@ -27,14 +42,52 @@ impl CreateSystemCommand {
 }
 
 #[async_trait]
-impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
+impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        context.bot.send_message(message.channel_id(), &format!("{:#?}", args)).await?;
+        let system_id = A::get_system_id(context, message.author().id()).await?;
+
+        if system_id.is_some() {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    "You have already created a system. View it with `pl!system`".into(),
+                )
+                .await?;
+
+            return Ok(());
+        }
+
+        let Some(name) = get_argument_single(args, Self::NAME) else {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    "Cannot create a sytem without specifying a name.".into(),
+                )
+                .await?;
+
+            return Ok(());
+        };
+
+        let tag = get_argument_single(args, Self::TAG);
+
+        let avatar_url = get_argument_single(args, Self::AVATAR_URL);
+
+        let system_id = A::create_system(context, message.author().id(), name, avatar_url, tag).await?;
+
+        context
+            .bot
+            .send_message(
+                message.channel_id(),
+                format!("System created! View it with `pl!system`\n-# System ID: {}", system_id),
+            )
+            .await?;
 
         return Ok(());
     }

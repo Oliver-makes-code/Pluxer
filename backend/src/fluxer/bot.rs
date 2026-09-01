@@ -10,9 +10,9 @@ use crate::{bot::BackendBot, fluxer::FluxerApi};
 impl BackendBot for Rest {
     type Api = FluxerApi;
 
-    async fn send_message(&self, channel_id: &Snowflake, content: &str) -> Result<Message, Error> {
+    async fn send_message(&self, channel_id: &Snowflake, content: String) -> Result<Message, Error> {
         let payload = MessagePayloadData {
-            content: Some(content.into()),
+            content: Some(content),
             ..Default::default()
         };
 

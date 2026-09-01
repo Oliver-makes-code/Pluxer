@@ -8,16 +8,17 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: DatabaseSnowflake,
 
-    pub system_id: DatabaseId,
-
+    #[sea_orm(primary_key, auto_increment = false)]
     pub instance_url: String,
+
+    pub system_id: DatabaseId,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
         belongs_to = "system::Entity",
-        from = "Column::SystemId"
+        from = "Column::SystemId",
         to = "system::Column::Id"
     )]
     System,

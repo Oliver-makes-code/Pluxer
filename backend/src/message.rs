@@ -7,6 +7,8 @@ pub trait BackendMessage: Send + Sync {
 
     fn channel_id(&self) -> &<Self::Api as PluxerApi>::Id;
 
+    fn author(&self) -> &<Self::Api as crate::PluxerApi>::User;
+
     fn content(&self) -> &str;
 
     fn created_by_bot(&self) -> bool;

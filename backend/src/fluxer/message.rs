@@ -10,6 +10,10 @@ impl BackendMessage for Message {
         return &self.id;
     }
 
+    fn author(&self) -> &<Self::Api as crate::PluxerApi>::User {
+        return &self.author;
+    }
+
     fn content(&self) -> &str {
         return &self.content;
     }

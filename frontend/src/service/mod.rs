@@ -22,15 +22,8 @@ pub enum PluxerService {
     Disabled,
 }
 
-#[derive(Debug, Error)]
-pub enum PluxerServiceError {
-    #[cfg(feature = "fluxer")]
-    #[error(transparent)]
-    Fluxer(#[from] Error),
-}
-
 impl PluxerService {
-    pub async fn start(self) -> Result<(), PluxerServiceError> {
+    pub async fn start(self, database_url: Arc<str>) -> anyhow::Result<()> {
         match self {
             Self::Disabled => {}
 
@@ -40,7 +33,7 @@ impl PluxerService {
                 token,
                 instance_name,
             } => {
-                fluxer::run(&api_endpoint, &token, instance_name).await?;
+                fluxer::run(api_endpoint, &token, instance_name, &database_url).await?;
             }
         }
 
