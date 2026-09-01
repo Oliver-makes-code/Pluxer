@@ -31,8 +31,16 @@ pub enum Relation {
         to = "super::system::Column::Id"
     )]
     System,
+    #[sea_orm(has_many = "super::message::fluxer::Entity")]
+    FluxerMessages,
     #[sea_orm(has_many = "super::proxy::Entity")]
     Proxies,
+}
+
+impl Related<super::message::fluxer::Entity> for Entity {
+    fn to() -> RelationDef {
+        return Relation::FluxerMessages.def();
+    }
 }
 
 impl Related<super::system::Entity> for Entity {

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use pluxer_database::sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "fluxer")]
@@ -19,7 +20,7 @@ pub enum PluxerService {
 }
 
 impl PluxerService {
-    pub async fn start(self, database_url: Arc<str>) -> anyhow::Result<()> {
+    pub async fn start(self, database: DatabaseConnection) -> anyhow::Result<()> {
         match self {
             Self::Disabled => {}
 
@@ -29,7 +30,7 @@ impl PluxerService {
                 token,
                 instance_name,
             } => {
-                fluxer::run(api_endpoint, &token, instance_name, &database_url).await?;
+                fluxer::run(api_endpoint, &token, instance_name, database).await?;
             }
         }
 

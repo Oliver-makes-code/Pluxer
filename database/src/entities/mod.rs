@@ -2,6 +2,7 @@ use sea_orm::{DbErr, DeriveValueType, TryFromU64, sqlx::types::Uuid};
 use ulid::Ulid;
 
 pub mod member;
+pub mod message;
 pub mod proxy;
 pub mod system;
 pub mod user;

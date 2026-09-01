@@ -9,6 +9,7 @@ use pluxer_backend::fluxer::{
     fluxer_rest::RestOptions,
     fluxer_types::{ApiUser, Routes},
 };
+use pluxer_database::sea_orm::DatabaseConnection;
 
 use crate::bot::PluxerContext;
 
@@ -16,7 +17,7 @@ pub async fn run(
     api_url: Arc<str>,
     token: &str,
     instance_name: Arc<str>,
-    database_url: &str,
+    database: DatabaseConnection,
 ) -> anyhow::Result<()> {
     let options = ClientOptions {
         intents: 0,
@@ -34,7 +35,7 @@ pub async fn run(
     let context = Arc::new(
         PluxerContext::<FluxerApi>::new(
             client.rest.clone(),
-            &database_url,
+            database,
             instance_name.clone(),
             api_url,
         )

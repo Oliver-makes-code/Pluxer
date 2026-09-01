@@ -17,6 +17,7 @@ pawkit-logger = "0.1.25"
 xxhash-rust = { version = "0.8.18", features = ["xxh3"] }
 csscolorparser = "0.8.4"
 base64 = "0.23.1"
+dashmap = "6.2.1"
 
 [features]
 default = ["fluxer"]

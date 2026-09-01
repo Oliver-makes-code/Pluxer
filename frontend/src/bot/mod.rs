@@ -1,7 +1,8 @@
 use std::{fs, path::Path, sync::Arc};
 
+use dashmap::DashMap;
 use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage};
-use pluxer_database::{connect, sea_orm::DatabaseConnection};
+use pluxer_database::sea_orm::DatabaseConnection;
 use ulid::Ulid;
 
 use crate::{
@@ -19,6 +20,7 @@ pub struct PluxerContext<A: DatabaseExtension> {
     pub bot: A::Bot,
     pub database_connection: DatabaseConnection,
     pub command_tree: CommandRoot<PluxerContext<A>>,
+    pub webhook_cache: DashMap<A::Id, A::Webhook>,
     pub _instance_name: Arc<str>,
     pub instance_url: Arc<str>,
 }
@@ -32,14 +34,15 @@ impl<A: DatabaseExtension> PluxerContext<A> {
 
     pub async fn new(
         bot: A::Bot,
-        database_url: &str,
+        database: DatabaseConnection,
         instance_name: Arc<str>,
         instance_url: Arc<str>,
     ) -> anyhow::Result<Self> {
         return Ok(Self {
             bot,
-            database_connection: connect(database_url).await?,
+            database_connection: database,
             command_tree: create_command_tree(),
+            webhook_cache: DashMap::default(),
             _instance_name: instance_name,
             instance_url,
         });

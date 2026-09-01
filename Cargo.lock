@@ -2104,6 +2104,7 @@ dependencies = [
  "anyhow",
  "base64 0.23.1",
  "csscolorparser",
+ "dashmap",
  "dotenv",
  "pawkit-logger",
  "pluxer-backend",
