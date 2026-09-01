@@ -1,7 +1,8 @@
-use std::sync::Arc;
+use std::{fs, path::Path, sync::Arc};
 
-use pluxer_backend::{PluxerApi, message::BackendMessage};
+use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage};
 use pluxer_database::{connect, sea_orm::DatabaseConnection};
+use ulid::Ulid;
 
 use crate::{
     bot::{
@@ -57,7 +58,35 @@ impl<A: DatabaseExtension> PluxerContext<A> {
 
         let command = &content[Self::PREFIX.len()..];
 
-        parse_command(command, &self.command_tree, self, message).await?;
+        if let Err(err) = parse_command(command, &self.command_tree, self, message).await {
+            let error_id = Ulid::generate();
+
+            let mut error_report = String::new();
+
+            error_report += &format!("{}", err);
+
+            let result = self.bot.send_message(message.channel_id(), None, Some(Embed {
+                title: Some("Unexpected error!".into()),
+                description: Some("Please report to our [GitHub Repository](https://github.com/Oliver-makes-code/Pluxer/issues), and include the error ID listed below.".into()),
+                footer: Some(format!("Error ID: {}", error_id)),
+
+                ..Default::default()
+            })).await;
+
+            if let Err(err) = result {
+                error_report += &format!("\n\n{}", err);
+            };
+
+            pawkit_logger::log!(error, "{}: {}", error_id, error_report);
+
+            let path = Path::new("logs/error");
+
+            fs::create_dir_all(path)?;
+
+            let file_path = path.join(format!("{}.txt", error_id));
+
+            fs::write(file_path, error_report)?;
+        }
 
         return Ok(());
     }

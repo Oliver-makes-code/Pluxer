@@ -54,7 +54,8 @@ pub async fn run(
                         .await
                         .unwrap();
 
-                    println!(
+                    pawkit_logger::log!(
+                        info,
                         "{}: User '{}' ({}) ready!",
                         instance_name, user.username, user.id
                     );

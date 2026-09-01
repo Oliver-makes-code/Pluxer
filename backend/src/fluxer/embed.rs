@@ -11,11 +11,11 @@ impl From<Embed> for ApiEmbed {
             footer: value.footer.map(|it| ApiEmbedFooter {
                 text: it,
                 icon_url: None,
-                proxy_icon_url: None
+                proxy_icon_url: None,
             }),
             color: Some(value.color),
             fields: Some(value.fields.into_iter().map(Into::into).collect()),
-            
+
             url: None,
             thumbnail: None,
             timestamp: None,
@@ -26,7 +26,7 @@ impl From<Embed> for ApiEmbed {
             video: None,
             nsfw: None,
             children: None,
-        }
+        };
     }
 }
 
@@ -36,6 +36,6 @@ impl From<EmbedField> for ApiEmbedField {
             name: value.name,
             value: value.value,
             inline: Some(value.inline),
-        }
+        };
     }
 }

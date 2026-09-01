@@ -495,8 +495,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -1960,6 +1962,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "pawkit-logger"
+version = "0.1.25"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcba77d2e2b306d391afb7ab9acadc12d12960a39cfe43b5be9d26b347c69b2f"
+dependencies = [
+ "chrono",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2025,6 +2038,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dotenv",
+ "pawkit-logger",
  "pluxer-backend",
  "pluxer-database",
  "serde",

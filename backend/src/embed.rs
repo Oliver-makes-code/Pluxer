@@ -1,3 +1,4 @@
+#[derive(Default)]
 pub struct Embed {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -6,6 +7,7 @@ pub struct Embed {
     pub fields: Vec<EmbedField>,
 }
 
+#[derive(Default)]
 pub struct EmbedField {
     pub name: String,
     pub value: String,

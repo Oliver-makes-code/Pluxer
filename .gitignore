@@ -1,3 +1,4 @@
 target/
 database.db
 pluxer_config.json
+logs/

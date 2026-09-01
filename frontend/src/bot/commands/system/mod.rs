@@ -1,5 +1,13 @@
-use pluxer_backend::{PluxerApi, bot::BackendBot, embed::{Embed, EmbedField}, message::BackendMessage, user::BackendUser};
+use std::io;
+
+use pluxer_backend::{
+    bot::BackendBot,
+    embed::{Embed, EmbedField},
+    message::BackendMessage,
+    user::BackendUser,
+};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
+use thiserror::Error;
 
 use crate::{
     bot::{
@@ -28,7 +36,7 @@ impl SystemCommand {
 impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
     async fn execute<'a>(
         &self,
-        args: &'a CommandArguments<'a>,
+        _args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
@@ -51,7 +59,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
             fields.push(EmbedField {
                 name: "Tag".into(),
                 value: tag,
-                inline: true
+                inline: true,
             });
         }
 
@@ -60,18 +68,13 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
             description: system.description,
             fields,
             footer: Some(format!("System ID: {}", system.id)),
-            color: 0xFFFFFF,
+            ..Default::default()
         };
 
         context
             .bot
-            .send_message(
-                message.channel_id(),
-                None,
-                Some(embed),
-            )
+            .send_message(message.channel_id(), None, Some(embed))
             .await?;
-
 
         return Ok(());
     }
