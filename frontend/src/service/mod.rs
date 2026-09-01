@@ -1,10 +1,6 @@
-#[cfg(feature = "fluxer")]
 use std::sync::Arc;
 
-#[cfg(feature = "fluxer")]
-use pluxer_backend::fluxer::fluxer_core::Error;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
 
 #[cfg(feature = "fluxer")]
 mod fluxer;

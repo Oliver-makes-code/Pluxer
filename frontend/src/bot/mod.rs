@@ -19,7 +19,7 @@ pub struct PluxerContext<A: DatabaseExtension> {
     pub bot: A::Bot,
     pub database_connection: DatabaseConnection,
     pub command_tree: CommandRoot<PluxerContext<A>>,
-    pub instance_name: Arc<str>,
+    pub _instance_name: Arc<str>,
     pub instance_url: Arc<str>,
 }
 
@@ -40,7 +40,7 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             bot,
             database_connection: connect(database_url).await?,
             command_tree: create_command_tree(),
-            instance_name,
+            _instance_name: instance_name,
             instance_url,
         });
     }

@@ -1,5 +1,3 @@
-use std::io;
-
 use pluxer_backend::{
     bot::BackendBot,
     embed::{Embed, EmbedField},
@@ -7,18 +5,15 @@ use pluxer_backend::{
     user::BackendUser,
 };
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
-use thiserror::Error;
 
 use crate::{
     bot::{
-        PluxerContext,
-        command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder},
-        commands::system::create::CreateSystemCommand,
-    },
-    database::DatabaseExtension,
+        PluxerContext, command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder}, commands::system::{create::CreateSystemCommand, delete::DeleteSystemCommand},
+    }, database::DatabaseExtension,
 };
 
 mod create;
+mod delete;
 
 pub struct SystemCommand;
 
@@ -28,6 +23,7 @@ impl SystemCommand {
             command.executes(SystemCommand);
 
             CreateSystemCommand::append(command);
+            DeleteSystemCommand::append(command);
         });
     }
 }

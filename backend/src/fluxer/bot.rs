@@ -7,11 +7,23 @@ use serde::{Deserialize, Serialize};
 
 use crate::{bot::BackendBot, embed::Embed, fluxer::FluxerApi};
 
+#[derive(Serialize, Deserialize)]
+struct AllowedMentions {
+    pub replied_user: bool
+}
+
+#[derive(Serialize, Deserialize)]
+struct MessagePayloadDataExtension {
+    #[serde(flatten)]
+    pub message: MessagePayloadData,
+    pub allowed_mentions: Option<AllowedMentions>,
+}
+
 // why does not have in library?????
 #[derive(Serialize, Deserialize)]
 struct WebhookPayloadData {
     #[serde(flatten)]
-    pub message: MessagePayloadData,
+    pub message: MessagePayloadDataExtension,
     pub username: Option<String>,
     pub avatar_url: Option<String>,
 }
@@ -20,17 +32,20 @@ fn message_payload(
     content: Option<String>,
     embed: Option<Embed>,
     referenced_message: Option<&Message>,
-) -> MessagePayloadData {
-    return MessagePayloadData {
-        content: content,
-        embeds: embed.map(Into::into).map(|it| vec![it]),
-        message_reference: referenced_message.map(|it| ApiMessageReference {
-            channel_id: it.channel_id.clone(),
-            message_id: it.id.clone(),
-            guild_id: it.guild_id.clone(),
-            kind: None,
-        }),
-        ..Default::default()
+) -> MessagePayloadDataExtension {
+    return MessagePayloadDataExtension {
+        message: MessagePayloadData {
+            content: content,
+            embeds: embed.map(Into::into).map(|it| vec![it]),
+            message_reference: referenced_message.map(|it| ApiMessageReference {
+                channel_id: it.channel_id.clone(),
+                message_id: it.id.clone(),
+                guild_id: it.guild_id.clone(),
+                kind: None,
+            }),
+            ..Default::default()
+        },
+        allowed_mentions: Some(AllowedMentions { replied_user: false })
     };
 }
 

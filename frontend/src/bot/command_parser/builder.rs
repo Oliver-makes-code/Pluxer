@@ -1,7 +1,5 @@
-use std::pin::Pin;
-
 use crate::bot::command_parser::{
-    CommandArguments, CommandContext, CommandExecutor,
+    CommandContext, CommandExecutor,
     node::{
         CommandArgumentKind, CommandNode,
         greedy::GreedyStringArgument,

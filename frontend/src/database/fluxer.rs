@@ -1,11 +1,9 @@
-use std::ops::Deref;
-
 use pluxer_backend::{PluxerApi, fluxer::FluxerApi, id::BackendId};
 use pluxer_database::{
     entities::{DatabaseSnowflake, user},
     sea_orm::{
-        ActiveModelTrait, ActiveValue, ColumnTrait, DatabaseConnection, DbErr, EntityTrait,
-        QueryFilter, entity::prelude::async_trait::async_trait,
+        ActiveModelTrait, ActiveValue, DbErr, EntityTrait,
+        entity::prelude::async_trait::async_trait,
     },
 };
 use ulid::Ulid;
