@@ -209,7 +209,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
             .bot
             .send_message(
                 message.channel_id(),
-                Some("System info updated! View them with `pl!member`".into()),
+                Some("Member info updated! View them with `pl!member`".into()),
                 None,
                 Some(message),
             )
