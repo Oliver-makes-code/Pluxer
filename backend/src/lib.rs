@@ -2,7 +2,7 @@ use std::error::Error;
 
 use crate::{
     bot::BackendBot, channel::BackendChannel, id::BackendId, message::BackendMessage,
-    user::BackendUser,
+    user::BackendUser, webhook::BackendWebhook,
 };
 
 pub mod bot;
@@ -11,6 +11,7 @@ pub mod embed;
 pub mod id;
 pub mod message;
 pub mod user;
+pub mod webhook;
 
 #[cfg(feature = "fluxer")]
 pub mod fluxer;
@@ -22,4 +23,5 @@ pub trait PluxerApi: Send + Sync {
     type User: BackendUser<Api = Self>;
     type Message: BackendMessage<Api = Self>;
     type Channel: BackendChannel<Api = Self>;
+    type Webhook: BackendWebhook<Api = Self>;
 }

@@ -52,6 +52,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                     message.channel_id(),
                     Some("You have already created a system. View it with `pl!system`".into()),
                     None,
+                    Some(message),
                 )
                 .await?;
 
@@ -65,6 +66,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                     message.channel_id(),
                     Some("Cannot create a sytem without specifying a name.".into()),
                     None,
+                    Some(message),
                 )
                 .await?;
 
@@ -87,6 +89,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                     system_id
                 )),
                 None,
+                Some(message),
             )
             .await?;
 

@@ -47,6 +47,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                     message.channel_id(),
                     Some("You do not have a system. Create one with `pl!system new <name>`".into()),
                     None,
+                    Some(message),
                 )
                 .await?;
 
@@ -73,7 +74,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
 
         context
             .bot
-            .send_message(message.channel_id(), None, Some(embed))
+            .send_message(message.channel_id(), None, Some(embed), Some(message))
             .await?;
 
         return Ok(());

@@ -1,4 +1,4 @@
-use fluxer_core::{Channel, Error, Message, User};
+use fluxer_core::{Channel, Error, Message, User, Webhook};
 use fluxer_rest::Rest;
 use fluxer_types::Snowflake;
 
@@ -17,6 +17,7 @@ mod embed;
 mod id;
 mod message;
 mod user;
+mod webhook;
 
 pub struct FluxerApi;
 
@@ -27,4 +28,5 @@ impl PluxerApi for FluxerApi {
     type Message = Message;
     type User = User;
     type Channel = Channel;
+    type Webhook = Webhook;
 }

@@ -2020,6 +2020,8 @@ dependencies = [
  "fluxer-types",
  "fluxer-util",
  "fluxer-ws",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

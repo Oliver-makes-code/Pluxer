@@ -5,24 +5,26 @@ edition = "2024"
 
 [dependencies]
 async-trait.workspace = true
-
-fluxer-builders.workspace = true
 fluxer-builders.optional = true
 
-fluxer-core.workspace = true
+fluxer-builders.workspace = true
 fluxer-core.optional = true
 
-fluxer-rest.workspace = true
+fluxer-core.workspace = true
 fluxer-rest.optional = true
 
-fluxer-types.workspace = true
+fluxer-rest.workspace = true
 fluxer-types.optional = true
 
-fluxer-util.workspace = true
+fluxer-types.workspace = true
 fluxer-util.optional = true
 
-fluxer-ws.workspace = true
+fluxer-util.workspace = true
 fluxer-ws.optional = true
+
+fluxer-ws.workspace = true
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 
 [features]
 default = ["fluxer"]
