@@ -5,13 +5,10 @@ use pluxer_database::{
 
 use crate::{
     bot::{
-        PluxerContext,
-        command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder},
-        commands::system::{
+        PluxerContext, command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder}, commands::{member::MemberCommand, system::{
             create::CreateSystemCommand, delete::DeleteSystemCommand, update::UpdateSystemCommand,
-        },
-    },
-    database::DatabaseExtension,
+        }},
+    }, database::DatabaseExtension,
 };
 
 pub mod create;
@@ -24,6 +21,8 @@ impl SystemCommand {
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["system", "sys", "s"], |command| {
             command.executes(SystemCommand);
+
+            MemberCommand::append(command);
 
             CreateSystemCommand::append(command);
             DeleteSystemCommand::append(command);
