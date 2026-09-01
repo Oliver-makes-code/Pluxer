@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                             .string()
                             .not_null(),
                     )
+                    .col(ColumnDef::new(FluxerMessages::AuthorId).big_integer().not_null())
                     .col(ColumnDef::new(FluxerMessages::SystemId).uuid().not_null())
                     .col(ColumnDef::new(FluxerMessages::MemberId).uuid().not_null())
                     .col(
@@ -66,6 +67,7 @@ enum FluxerMessages {
     Table,
     Id,
     InstanceUrl,
+    AuthorId,
     SystemId,
     MemberId,
     ExpiresAt,

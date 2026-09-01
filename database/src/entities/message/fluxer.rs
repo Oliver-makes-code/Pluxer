@@ -11,6 +11,8 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub instance_url: String,
 
+    pub author_id: DatabaseSnowflake,
+
     pub system_id: DatabaseId,
     pub member_id: DatabaseId,
 
