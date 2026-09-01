@@ -7,10 +7,12 @@ pub struct SystemModel {
     pub id: Ulid,
 
     pub name: String,
+    pub display_name: Option<String>,
 
     pub tag: Option<String>,
 
     pub description: Option<String>,
+    pub pronouns: Option<String>,
     pub avatar_url: Option<String>,
     pub timezone: Option<String>,
     pub color: Option<u32>,
@@ -24,8 +26,10 @@ impl From<system::Model> for SystemModel {
         return Self {
             id: value.id.into(),
             name: value.name,
+            display_name: value.display_name,
             tag: value.tag,
             description: value.description,
+            pronouns: value.pronouns,
             avatar_url: value.avatar_url,
             timezone: value.timezone,
             color: value.color.map(|it| it as u32),

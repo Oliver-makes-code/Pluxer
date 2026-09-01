@@ -7,25 +7,32 @@ use crate::{
         command_parser::{
             CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
         },
-        commands::{DELETE_VARIANTS, YES, YES_UNIX},
+        commands::{
+            DELETE_VARIANTS, NAME, YES, YES_UNIX, member::MemberCommand,
+            system::create::CreateSystemCommand,
+        },
     },
     database::DatabaseExtension,
 };
 
-pub struct DeleteSystemCommand;
+pub struct DeleteMemberCommand;
 
-impl DeleteSystemCommand {
+impl DeleteMemberCommand {
+    pub const USAGE: &str = "pl!member delete [-y] <name>";
+
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(DELETE_VARIANTS, |command| {
-            command.executes(DeleteSystemCommand);
+            command.executes(DeleteMemberCommand);
 
-            command.unix(YES_UNIX, |_| {});
+            command.unix(YES_UNIX, |command| {
+                command.greedy_string(NAME, |_| {});
+            });
         });
     }
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCommand {
+impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
@@ -37,7 +44,41 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some("You already do not have a system.".into()),
+                    Some(format!(
+                        "You do not have a system. Create one with `{}`",
+                        CreateSystemCommand::USAGE
+                    )),
+                    None,
+                    Some(message),
+                )
+                .await?;
+
+            return Ok(());
+        };
+
+        let Some(name) = get_argument_single(args, NAME) else {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    None,
+                    Some(message),
+                )
+                .await?;
+
+            return Ok(());
+        };
+
+        let Some(member) = MemberCommand::fetch_member(context, system_id, name).await? else {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some(format!(
+                        "Unable to find member '{}'. Are you sure you typed in the name correctly?",
+                        name
+                    )),
                     None,
                     Some(message),
                 )
@@ -51,7 +92,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some("Are you sure you want to delete your system? Rerun the command as `pl!system delete -y` to confirm.".into()),
+                    Some(format!("Are you sure you want to delete this member? Rerun the command as `pl!system delete -y {}` to confirm.", name)),
                     None,
                     Some(message),
                 )
@@ -60,27 +101,17 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
             return Ok(());
         };
 
-        if A::detach_or_delete_system(context, message.author().id(), system_id).await? {
-            context
-                .bot
-                .send_message(
-                    message.channel_id(),
-                    Some("System deleted.".into()),
-                    None,
-                    Some(message),
-                )
-                .await?;
-        } else {
-            context
-                .bot
-                .send_message(
-                    message.channel_id(),
-                    Some("System detached from this accout.".into()),
-                    None,
-                    Some(message),
-                )
-                .await?;
-        }
+        A::delete_member(context, system_id, member.id).await?;
+
+        context
+            .bot
+            .send_message(
+                message.channel_id(),
+                Some("Member deleted.".into()),
+                None,
+                Some(message),
+            )
+            .await?;
 
         return Ok(());
     }

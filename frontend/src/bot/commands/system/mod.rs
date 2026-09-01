@@ -1,5 +1,7 @@
 use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser};
-use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
+use pluxer_database::{
+    model::system::SystemModel, sea_orm::entity::prelude::async_trait::async_trait,
+};
 
 use crate::{
     bot::{
@@ -12,22 +14,13 @@ use crate::{
     database::DatabaseExtension,
 };
 
-mod create;
-mod delete;
-mod update;
+pub mod create;
+pub mod delete;
+pub mod update;
 
 pub struct SystemCommand;
 
 impl SystemCommand {
-    pub const NAME: &str = "name";
-    pub const NAME_VARIANTS: &[&str] = &["name", "n"];
-    pub const TAG: &str = "tag";
-    pub const TAG_VARIANTS: &[&str] = &["tag", "t"];
-    pub const AVATAR_URL: &str = "avatar_url";
-    pub const AVATAR_URL_VARIANTS: &[&str] = &["avatar_url", "avatar", "a"];
-    pub const DESCRIPTION: &str = "description";
-    pub const DESCRIPTION_VARIANTS: &[&str] = &["description", "desc", "d"];
-
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["system", "sys", "s"], |command| {
             command.executes(SystemCommand);
@@ -36,6 +29,32 @@ impl SystemCommand {
             DeleteSystemCommand::append(command);
             UpdateSystemCommand::append(command);
         });
+    }
+
+    pub fn system_to_embed(system: SystemModel, member_count: usize) -> Embed {
+        let mut description = vec![];
+
+        system.description.map(|it| description.push(it));
+
+        system
+            .pronouns
+            .map(|it| description.push(format!("\n**Pronouns:** {}", it)));
+
+        system
+            .tag
+            .map(|it| description.push(format!("\n**Tag:** {}", it)));
+
+        description.push(format!("\n**Members:**: {}", member_count));
+
+        description.push(format!("\n-# System ID: `{}`", system.id));
+
+        return Embed {
+            title: Some(system.display_name.unwrap_or(system.name)),
+            description: Some(description.join("\n")),
+            color: system.color.unwrap_or(0),
+            thumbnail_url: system.avatar_url,
+            ..Default::default()
+        };
     }
 }
 
@@ -81,24 +100,17 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
             return Ok(());
         };
 
-        let mut description = vec![];
-
-        system.description.map(|it| description.push(it));
-
-        system
-            .tag
-            .map(|it| description.push(format!("**Tag:** {}", it)));
-
-        let embed = Embed {
-            title: Some(system.name),
-            description: Some(description.join("\n")),
-            footer: Some(format!("System ID: {}", system.id)),
-            ..Default::default()
-        };
-
         context
             .bot
-            .send_message(message.channel_id(), None, Some(embed), Some(message))
+            .send_message(
+                message.channel_id(),
+                None,
+                Some(Self::system_to_embed(
+                    system,
+                    A::fetch_member_count(context, system_id).await?,
+                )),
+                Some(message),
+            )
             .await?;
 
         return Ok(());

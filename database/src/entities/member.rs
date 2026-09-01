@@ -15,6 +15,7 @@ pub struct Model {
     pub display_name: Option<String>,
 
     pub description: Option<String>,
+    pub pronouns: Option<String>,
     pub avatar_url: Option<String>,
     pub color: Option<i32>,
 

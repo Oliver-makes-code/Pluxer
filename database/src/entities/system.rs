@@ -9,10 +9,12 @@ pub struct Model {
     pub id: DatabaseId,
 
     pub name: String,
+    pub display_name: Option<String>,
 
     pub tag: Option<String>,
 
     pub description: Option<String>,
+    pub pronouns: Option<String>,
     pub avatar_url: Option<String>,
     pub timezone: Option<String>,
     pub color: Option<i32>,

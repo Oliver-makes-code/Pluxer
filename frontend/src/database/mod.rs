@@ -4,7 +4,7 @@ use pluxer_database::{
     model::{member::MemberModel, system::SystemModel},
     sea_orm::{
         ActiveModelTrait, ActiveValue, ColumnTrait, DbErr, EntityTrait, PaginatorTrait,
-        QueryFilter, entity::prelude::async_trait::async_trait, sqlx::types::chrono::DateTime,
+        QueryFilter, entity::prelude::async_trait::async_trait, sqlx::types::chrono::Utc,
     },
 };
 use ulid::Ulid;
@@ -21,7 +21,7 @@ pub enum DatabaseUpdate<T> {
 }
 
 impl<T> DatabaseUpdate<T> {
-    fn map<U>(self, f: impl FnOnce(T) -> U) -> DatabaseUpdate<U> {
+    pub fn map<U>(self, f: impl FnOnce(T) -> U) -> DatabaseUpdate<U> {
         match self {
             Self::Keep => return DatabaseUpdate::Keep,
             Self::Set(value) => return DatabaseUpdate::Set(f(value)),
@@ -58,7 +58,9 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         context: &PluxerContext<Self>,
         user_id: &<Self as PluxerApi>::Id,
         name: &str,
+        display_name: Option<&str>,
         description: Option<&str>,
+        pronouns: Option<&str>,
         tag: Option<&str>,
         avatar_url: Option<&str>,
         color: Option<u32>,
@@ -68,14 +70,16 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         let system = system::ActiveModel {
             id: ActiveValue::Set(system_id.into()),
             name: ActiveValue::Set(name.to_string()),
+            display_name: ActiveValue::Set(display_name.map(ToString::to_string)),
             avatar_url: ActiveValue::Set(avatar_url.map(ToString::to_string)),
             tag: ActiveValue::Set(tag.map(ToString::to_string)),
             description: ActiveValue::Set(description.map(ToString::to_string)),
+            pronouns: ActiveValue::Set(pronouns.map(ToString::to_string)),
             color: ActiveValue::Set(color.map(|it| it as i32)),
             timezone: ActiveValue::NotSet,
 
-            created_at: ActiveValue::Set(DateTime::default()),
-            updated_at: ActiveValue::Set(DateTime::default()),
+            created_at: ActiveValue::Set(Utc::now()),
+            updated_at: ActiveValue::Set(Utc::now()),
         };
 
         system.insert(&context.database_connection).await?;
@@ -125,8 +129,10 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         system_id: Ulid,
         name: DatabaseUpdate<&str>,
         tag: DatabaseUpdate<Option<&str>>,
+        display_name: DatabaseUpdate<Option<&str>>,
         avatar_url: DatabaseUpdate<Option<&str>>,
         description: DatabaseUpdate<Option<&str>>,
+        pronouns: DatabaseUpdate<Option<&str>>,
         color: DatabaseUpdate<Option<u32>>,
     ) -> Result<(), DbErr> {
         let system = system::ActiveModel {
@@ -136,9 +142,11 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             avatar_url: avatar_url.map(|it| it.map(ToString::to_string)).into(),
             tag: tag.map(|it| it.map(ToString::to_string)).into(),
             description: description.map(|it| it.map(ToString::to_string)).into(),
+            pronouns: pronouns.map(|it| it.map(ToString::to_string)).into(),
+            display_name: display_name.map(|it| it.map(ToString::to_string)).into(),
             color: color.map(|it| it.map(|it| it as i32)).into(),
 
-            updated_at: ActiveValue::Set(DateTime::default()),
+            updated_at: ActiveValue::Set(Utc::now()),
 
             ..Default::default()
         };
@@ -148,12 +156,23 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         return Ok(());
     }
 
+    async fn fetch_member_count(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+    ) -> Result<usize, DbErr> {
+        return Ok(member::Entity::find()
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .count(&context.database_connection)
+            .await? as usize);
+    }
+
     async fn create_member(
         context: &PluxerContext<Self>,
         system_id: Ulid,
         name: &str,
         display_name: Option<&str>,
         description: Option<&str>,
+        pronouns: Option<&str>,
         avatar_url: Option<&str>,
         color: Option<u32>,
     ) -> Result<(Ulid, u32), DbErr> {
@@ -170,11 +189,12 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             display_name: ActiveValue::Set(display_name.map(ToString::to_string)),
 
             description: ActiveValue::Set(description.map(ToString::to_string)),
+            pronouns: ActiveValue::Set(pronouns.map(ToString::to_string)),
             avatar_url: ActiveValue::Set(avatar_url.map(ToString::to_string)),
             color: ActiveValue::Set(color.map(|it| it as i32)),
 
-            created_at: ActiveValue::Set(DateTime::default()),
-            updated_at: ActiveValue::Set(DateTime::default()),
+            created_at: ActiveValue::Set(Utc::now()),
+            updated_at: ActiveValue::Set(Utc::now()),
         };
 
         member.insert(&context.database_connection).await?;
@@ -189,7 +209,7 @@ pub trait DatabaseExtension: PluxerApi + Sized {
     ) -> Result<Option<MemberModel>, DbErr> {
         let member = member::Entity::find()
             .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
-            .filter(member::Column::Name.eq(name))
+            .filter(member::Column::Name.eq(name.to_ascii_lowercase()))
             .one(&context.database_connection)
             .await?;
 
@@ -199,11 +219,11 @@ pub trait DatabaseExtension: PluxerApi + Sized {
     async fn fetch_member_by_hash(
         context: &PluxerContext<Self>,
         system_id: Ulid,
-        id_hash: i32,
+        id_hash: u32,
     ) -> Result<Option<MemberModel>, DbErr> {
         let member = member::Entity::find()
             .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
-            .filter(member::Column::IdHash.eq(id_hash))
+            .filter(member::Column::IdHash.eq(id_hash as i32))
             .one(&context.database_connection)
             .await?;
 
@@ -212,9 +232,11 @@ pub trait DatabaseExtension: PluxerApi + Sized {
 
     async fn fetch_member_by_id(
         context: &PluxerContext<Self>,
+        system_id: Ulid,
         member_id: Ulid,
     ) -> Result<Option<MemberModel>, DbErr> {
         let member = member::Entity::find_by_id(DatabaseId::from(member_id))
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
             .one(&context.database_connection)
             .await?;
 
@@ -226,6 +248,7 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         member_id: Ulid,
         name: DatabaseUpdate<&str>,
         display_name: DatabaseUpdate<Option<&str>>,
+        pronouns: DatabaseUpdate<Option<&str>>,
         avatar_url: DatabaseUpdate<Option<&str>>,
         description: DatabaseUpdate<Option<&str>>,
         color: DatabaseUpdate<Option<u32>>,
@@ -240,11 +263,12 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             display_name: display_name.map(|it| it.map(ToString::to_string)).into(),
 
             description: description.map(|it| it.map(ToString::to_string)).into(),
+            pronouns: pronouns.map(|it| it.map(ToString::to_string)).into(),
             avatar_url: avatar_url.map(|it| it.map(ToString::to_string)).into(),
             color: color.map(|it| it.map(|it| it as i32)).into(),
 
             created_at: ActiveValue::NotSet,
-            updated_at: ActiveValue::Set(DateTime::default()),
+            updated_at: ActiveValue::Set(Utc::now()),
         };
 
         member.update(&context.database_connection).await?;
@@ -252,8 +276,13 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         return Ok(());
     }
 
-    async fn delete_member(context: &PluxerContext<Self>, member_id: Ulid) -> Result<(), DbErr> {
+    async fn delete_member(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+    ) -> Result<(), DbErr> {
         member::Entity::delete_by_id(DatabaseId::from(member_id))
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
             .exec(&context.database_connection)
             .await?;
 

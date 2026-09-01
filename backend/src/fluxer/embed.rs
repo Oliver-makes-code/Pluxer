@@ -1,4 +1,4 @@
-use fluxer_types::{ApiEmbed, ApiEmbedField, ApiEmbedFooter};
+use fluxer_types::{ApiEmbed, ApiEmbedField, ApiEmbedFooter, ApiEmbedMedia};
 
 use crate::embed::{Embed, EmbedField};
 
@@ -15,9 +15,20 @@ impl From<Embed> for ApiEmbed {
             }),
             color: Some(value.color),
             fields: Some(value.fields.into_iter().map(Into::into).collect()),
+            thumbnail: value.thumbnail_url.map(|it| ApiEmbedMedia {
+                url: it,
+                proxy_url: None,
+                content_hash: None,
+                content_type: None,
+                width: None,
+                height: None,
+                description: None,
+                placeholder: None,
+                duration: None,
+                flags: None,
+            }),
 
             url: None,
-            thumbnail: None,
             timestamp: None,
             audio: None,
             author: None,

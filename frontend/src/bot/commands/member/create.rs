@@ -11,31 +11,31 @@ use crate::{
         commands::{
             AVATAR_URL, AVATAR_URL_VARIANTS, COLOR, COLOR_VARIANTS, CREATE_VARIANTS, DESCRIPTION,
             DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, PRONOUNS,
-            PRONOUNS_VARIANTS, TAG, TAG_VARIANTS, parse_color_rgb,
+            PRONOUNS_VARIANTS, member::MemberCommand, parse_color_rgb,
+            system::create::CreateSystemCommand, u32_to_base64,
         },
     },
     database::DatabaseExtension,
 };
 
-pub struct CreateSystemCommand;
+pub struct CreateMemberCommand;
 
-impl CreateSystemCommand {
+impl CreateMemberCommand {
     const UNIX_PARAMETERS: &[UnixParameter] = &[
-        UnixParameter::value(TAG, TAG_VARIANTS),
+        UnixParameter::value(DISPLAY_NAME, DISPLAY_NAME_VARIANTS),
         UnixParameter::value(AVATAR_URL, AVATAR_URL_VARIANTS),
         UnixParameter::value(DESCRIPTION, DESCRIPTION_VARIANTS),
-        UnixParameter::value(DISPLAY_NAME, DISPLAY_NAME_VARIANTS),
         UnixParameter::value(PRONOUNS, PRONOUNS_VARIANTS),
         UnixParameter::value(COLOR, COLOR_VARIANTS),
     ];
 
-    pub const USAGE: &str = "pl!system create [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--color=\"<color>\"] <name>";
+    pub const USAGE: &str = "pl!member create [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--color=\"<color>\"] <name>";
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(CREATE_VARIANTS, |command| {
-            command.executes(CreateSystemCommand);
+            command.executes(CreateMemberCommand);
 
-            command.unix(&Self::UNIX_PARAMETERS, |command| {
+            command.unix(Self::UNIX_PARAMETERS, |command| {
                 command.greedy_string(NAME, |_| {});
             });
         });
@@ -43,28 +43,29 @@ impl CreateSystemCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
+impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let system_id = A::fetch_system_id(context, message.author().id()).await?;
-
-        if system_id.is_some() {
+        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
             context
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some("You have already created a system. View it with `pl!system`".into()),
+                    Some(format!(
+                        "You do not have a system. Create one with `{}`",
+                        CreateSystemCommand::USAGE
+                    )),
                     None,
                     Some(message),
                 )
                 .await?;
 
             return Ok(());
-        }
+        };
 
         let Some(name) = get_argument_single(args, NAME) else {
             context
@@ -80,25 +81,39 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
             return Ok(());
         };
 
-        let display_name = get_argument_single(args, DISPLAY_NAME);
+        if A::fetch_member_by_name(context, system_id, name)
+            .await?
+            .is_some()
+        {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some(format!("You already have a member named {}.", name)),
+                    None,
+                    Some(message),
+                )
+                .await?;
 
-        let pronouns = get_argument_single(args, PRONOUNS);
+            return Ok(());
+        }
 
         let description = get_argument_single(args, DESCRIPTION);
 
-        let tag = get_argument_single(args, TAG);
+        let pronouns = get_argument_single(args, PRONOUNS);
+
+        let display_name = get_argument_single(args, DISPLAY_NAME);
 
         let avatar_url = get_argument_single(args, AVATAR_URL);
 
         let color = get_argument_single(args, COLOR).and_then(parse_color_rgb);
 
-        let system_id = A::create_system(
+        let (member_id, member_id_hash) = A::create_member(
             context,
-            message.author().id(),
+            system_id,
             name,
             display_name,
             description,
-            tag,
             pronouns,
             avatar_url,
             color,
@@ -109,10 +124,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
             .bot
             .send_message(
                 message.channel_id(),
-                Some(format!(
-                    "System created! View it with `pl!system`\n-# System ID: {}",
-                    system_id
-                )),
+                Some(format!("Member created! View them with `{}`\n-# Member ID: {}\n-# Member Shorthand ID: {}", MemberCommand::USAGE, member_id, u32_to_base64(member_id_hash))),
                 None,
                 Some(message),
             )

@@ -13,6 +13,8 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(Systems::Id).uuid().not_null().primary_key())
                     .col(ColumnDef::new(Systems::Name).string().not_null())
+                    .col(ColumnDef::new(Systems::DisplayName).string())
+                    .col(ColumnDef::new(Systems::Pronouns).string())
                     .col(ColumnDef::new(Systems::Tag).string())
                     .col(ColumnDef::new(Systems::Description).string())
                     .col(ColumnDef::new(Systems::AvatarUrl).string())
@@ -45,6 +47,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Members::Description).string())
                     .col(ColumnDef::new(Members::AvatarUrl).string())
                     .col(ColumnDef::new(Members::Color).integer())
+                    .col(ColumnDef::new(Members::Pronouns).string())
                     .col(
                         ColumnDef::new(Members::CreatedAt)
                             .timestamp_with_time_zone()
@@ -171,6 +174,8 @@ enum Systems {
     Table,
     Id,
     Name,
+    DisplayName,
+    Pronouns,
     Tag,
     Description,
     AvatarUrl,
@@ -188,6 +193,7 @@ enum Members {
     SystemId,
     Name,
     DisplayName,
+    Pronouns,
     Description,
     AvatarUrl,
     CreatedAt,

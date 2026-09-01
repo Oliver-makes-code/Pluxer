@@ -13,6 +13,7 @@ pub struct MemberModel {
     pub display_name: Option<String>,
 
     pub description: Option<String>,
+    pub pronouns: Option<String>,
     pub avatar_url: Option<String>,
     pub color: Option<u32>,
 
@@ -32,6 +33,7 @@ impl From<member::Model> for MemberModel {
             display_name: value.display_name,
 
             description: value.description,
+            pronouns: value.pronouns,
             avatar_url: value.avatar_url,
             color: value.color.map(|it| it as u32),
 
