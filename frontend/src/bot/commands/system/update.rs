@@ -45,17 +45,12 @@ impl UpdateSystemCommand {
 
     fn usage(&self) -> String {
         let Some(subcommand) = self.subcommand else {
-            if self.clear {
-                return "pl!system clear [--tag] [--avatar_url] [--description] [--name]".into();
-            }
-
             return "pl!system update [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--name=\"<name>\"]".into();
         };
 
         return format!(
-            "pl!system {0}{1} <{0}>",
+            "pl!system {0} <{0}>",
             subcommand,
-            if self.clear { " clear" } else { "" }
         );
     }
 
@@ -140,7 +135,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateSystemCom
             return Ok(());
         };
 
-        if args.is_empty() {
+        if !self.clear && args.is_empty() {
             context
                 .bot
                 .send_message(
