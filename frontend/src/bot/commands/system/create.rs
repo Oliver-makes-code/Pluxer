@@ -8,6 +8,7 @@ use crate::{
             CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
             node::unix::UnixParameter,
         },
+        commands::system::SystemCommand,
     },
     database::DatabaseExtension,
 };
@@ -15,23 +16,26 @@ use crate::{
 pub struct CreateSystemCommand;
 
 impl CreateSystemCommand {
-    const NAME: &str = "name";
-    const TAG: &str = "tag";
-    const AVATAR_URL: &str = "avatar_url";
-
     const UNIX_PARAMETERS: &[UnixParameter] = &[
-        UnixParameter::value(Self::TAG, &["tag", "t"]),
-        UnixParameter::value(Self::AVATAR_URL, &["avatar_url", "avatar", "a"]),
+        UnixParameter::value(SystemCommand::TAG, SystemCommand::TAG_VARIANTS),
+        UnixParameter::value(
+            SystemCommand::AVATAR_URL,
+            SystemCommand::AVATAR_URL_VARIANTS,
+        ),
+        UnixParameter::value(
+            SystemCommand::DESCRIPTION,
+            SystemCommand::DESCRIPTION_VARIANTS,
+        ),
     ];
 
-    pub const USAGE: &str = "pl!system create [--tag=<tag>] [--avatar_url=<avatar_url>] <name>";
+    pub const USAGE: &str = "pl!system create [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] <name>";
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["new", "n", "create", "c", "make"], |command| {
             command.executes(CreateSystemCommand);
 
             command.unix(&Self::UNIX_PARAMETERS, |command| {
-                command.greedy_string(Self::NAME, |_| {});
+                command.greedy_string(SystemCommand::NAME, |_| {});
             });
         });
     }
@@ -61,7 +65,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
             return Ok(());
         }
 
-        let Some(name) = get_argument_single(args, Self::NAME) else {
+        let Some(name) = get_argument_single(args, SystemCommand::NAME) else {
             context
                 .bot
                 .send_message(
@@ -75,12 +79,21 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
             return Ok(());
         };
 
-        let tag = get_argument_single(args, Self::TAG);
+        let description = get_argument_single(args, SystemCommand::DESCRIPTION);
 
-        let avatar_url = get_argument_single(args, Self::AVATAR_URL);
+        let tag = get_argument_single(args, SystemCommand::TAG);
 
-        let system_id =
-            A::create_system(context, message.author().id(), name, avatar_url, tag).await?;
+        let avatar_url = get_argument_single(args, SystemCommand::AVATAR_URL);
+
+        let system_id = A::create_system(
+            context,
+            message.author().id(),
+            name,
+            description,
+            tag,
+            avatar_url,
+        )
+        .await?;
 
         context
             .bot

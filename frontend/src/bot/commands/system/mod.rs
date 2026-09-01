@@ -5,23 +5,36 @@ use crate::{
     bot::{
         PluxerContext,
         command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder},
-        commands::system::{create::CreateSystemCommand, delete::DeleteSystemCommand},
+        commands::system::{
+            create::CreateSystemCommand, delete::DeleteSystemCommand, update::UpdateSystemCommand,
+        },
     },
     database::DatabaseExtension,
 };
 
 mod create;
 mod delete;
+mod update;
 
 pub struct SystemCommand;
 
 impl SystemCommand {
+    pub const NAME: &str = "name";
+    pub const NAME_VARIANTS: &[&str] = &["name", "n"];
+    pub const TAG: &str = "tag";
+    pub const TAG_VARIANTS: &[&str] = &["tag", "t"];
+    pub const AVATAR_URL: &str = "avatar_url";
+    pub const AVATAR_URL_VARIANTS: &[&str] = &["avatar_url", "avatar", "a"];
+    pub const DESCRIPTION: &str = "description";
+    pub const DESCRIPTION_VARIANTS: &[&str] = &["description", "desc", "d"];
+
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["system", "sys", "s"], |command| {
             command.executes(SystemCommand);
 
             CreateSystemCommand::append(command);
             DeleteSystemCommand::append(command);
+            UpdateSystemCommand::append(command);
         });
     }
 }
@@ -39,7 +52,10 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("You do not have a system. Create one with `{}`", CreateSystemCommand::USAGE)),
+                    Some(format!(
+                        "You do not have a system. Create one with `{}`",
+                        CreateSystemCommand::USAGE
+                    )),
                     None,
                     Some(message),
                 )

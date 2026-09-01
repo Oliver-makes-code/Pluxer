@@ -14,6 +14,32 @@ use crate::bot::PluxerContext;
 #[cfg(feature = "fluxer")]
 mod fluxer;
 
+pub enum DatabaseUpdate<T> {
+    Keep,
+    Set(T),
+}
+
+impl<T> DatabaseUpdate<T> {
+    fn map<U>(self, f: impl FnOnce(T) -> U) -> DatabaseUpdate<U> {
+        match self {
+            Self::Keep => return DatabaseUpdate::Keep,
+            Self::Set(value) => return DatabaseUpdate::Set(f(value)),
+        }
+    }
+}
+
+impl<T> From<DatabaseUpdate<T>> for ActiveValue<T>
+where
+    pluxer_database::sea_orm::Value: From<T>,
+{
+    fn from(value: DatabaseUpdate<T>) -> Self {
+        match value {
+            DatabaseUpdate::Keep => return ActiveValue::NotSet,
+            DatabaseUpdate::Set(value) => return ActiveValue::Set(value),
+        }
+    }
+}
+
 #[async_trait]
 pub trait DatabaseExtension: PluxerApi + Sized {
     async fn fetch_system_id(
@@ -31,8 +57,9 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         context: &PluxerContext<Self>,
         user_id: &<Self as PluxerApi>::Id,
         name: &str,
-        avatar_url: Option<&str>,
+        description: Option<&str>,
         tag: Option<&str>,
+        avatar_url: Option<&str>,
     ) -> Result<Ulid, DbErr> {
         let system_id = Ulid::generate();
 
@@ -41,6 +68,7 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             name: ActiveValue::Set(name.to_string()),
             avatar_url: ActiveValue::Set(avatar_url.map(ToString::to_string)),
             tag: ActiveValue::Set(tag.map(ToString::to_string)),
+            description: ActiveValue::Set(description.map(ToString::to_string)),
 
             created_at: ActiveValue::Set(DateTime::default()),
             updated_at: ActiveValue::Set(DateTime::default()),
@@ -99,5 +127,48 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         };
 
         return Self::fetch_system_by_id(context, system_id).await;
+    }
+
+    async fn update_system_by_id(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        name: DatabaseUpdate<&str>,
+        tag: DatabaseUpdate<Option<&str>>,
+        avatar_url: DatabaseUpdate<Option<&str>>,
+        description: DatabaseUpdate<Option<&str>>,
+    ) -> Result<(), DbErr> {
+        let system = system::ActiveModel {
+            id: ActiveValue::Set(DatabaseId::from(system_id)),
+
+            name: name.map(ToString::to_string).into(),
+            avatar_url: avatar_url.map(|it| it.map(ToString::to_string)).into(),
+            tag: tag.map(|it| it.map(ToString::to_string)).into(),
+            description: description.map(|it| it.map(ToString::to_string)).into(),
+
+            updated_at: ActiveValue::Set(DateTime::default()),
+
+            ..Default::default()
+        };
+
+        system.update(&context.database_connection).await?;
+
+        return Ok(());
+    }
+
+    async fn update_system_by_user(
+        context: &PluxerContext<Self>,
+        user_id: &<Self as PluxerApi>::Id,
+        name: DatabaseUpdate<&str>,
+        tag: DatabaseUpdate<Option<&str>>,
+        avatar_url: DatabaseUpdate<Option<&str>>,
+        description: DatabaseUpdate<Option<&str>>,
+    ) -> Result<(), DbErr> {
+        let Some(system_id) = Self::fetch_system_id(context, user_id).await? else {
+            return Ok(());
+        };
+
+        Self::update_system_by_id(context, system_id, name, tag, avatar_url, description).await?;
+
+        return Ok(());
     }
 }
