@@ -24,6 +24,8 @@ impl CreateSystemCommand {
         UnixParameter::value(Self::AVATAR_URL, &["avatar_url", "avatar", "a"]),
     ];
 
+    pub const USAGE: &str = "pl!system create [--tag=<tag>] [--avatar_url=<avatar_url>] <name>";
+
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["new", "n", "create", "c", "make"], |command| {
             command.executes(CreateSystemCommand);
@@ -64,7 +66,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some("Cannot create a sytem without specifying a name.".into()),
+                    Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
                 )

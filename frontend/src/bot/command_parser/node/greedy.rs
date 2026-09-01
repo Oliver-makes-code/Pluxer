@@ -12,10 +12,12 @@ impl CommandArgument for GreedyStringArgument {
 
         let trimmed = span.slice().trim();
 
-        parser.arguments.insert(
-            self.argument_name,
-            span.into_spanned(Box::new([span.into_spanned(trimmed)])),
-        );
+        if trimmed.len() != 0 {
+            parser.arguments.insert(
+                self.argument_name,
+                span.into_spanned(Box::new([span.into_spanned(trimmed)])),
+            );
+        }
 
         return Some(span);
     }

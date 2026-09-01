@@ -1,7 +1,10 @@
 use pluxer_backend::PluxerApi;
 use pluxer_database::{
-    entities::{DatabaseId, system, user}, model::system::SystemModel, sea_orm::{
-        ActiveModelTrait, ActiveValue, ColumnTrait, DbErr, EntityTrait, PaginatorTrait, QueryFilter, Related, entity::prelude::async_trait::async_trait, sqlx::types::chrono::DateTime,
+    entities::{DatabaseId, system, user},
+    model::system::SystemModel,
+    sea_orm::{
+        ActiveModelTrait, ActiveValue, ColumnTrait, DbErr, EntityTrait, PaginatorTrait,
+        QueryFilter, entity::prelude::async_trait::async_trait, sqlx::types::chrono::DateTime,
     },
 };
 use ulid::Ulid;
@@ -60,13 +63,18 @@ pub trait DatabaseExtension: PluxerApi + Sized {
     ) -> Result<bool, DbErr> {
         Self::set_system_id(context, user_id, None).await?;
 
-        let fluxer_count = user::fluxer::Entity::find().filter(user::fluxer::Column::SystemId.eq(DatabaseId::from(system_id))).count(&context.database_connection).await?;
+        let fluxer_count = user::fluxer::Entity::find()
+            .filter(user::fluxer::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .count(&context.database_connection)
+            .await?;
 
         if fluxer_count != 0 {
             return Ok(false);
         }
 
-        system::Entity::delete_by_id(DatabaseId::from(system_id)).exec(&context.database_connection).await?;
+        system::Entity::delete_by_id(DatabaseId::from(system_id))
+            .exec(&context.database_connection)
+            .await?;
 
         return Ok(true);
     }

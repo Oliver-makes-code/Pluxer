@@ -9,7 +9,7 @@ use crate::{bot::BackendBot, embed::Embed, fluxer::FluxerApi};
 
 #[derive(Serialize, Deserialize)]
 struct AllowedMentions {
-    pub replied_user: bool
+    pub replied_user: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -45,7 +45,9 @@ fn message_payload(
             }),
             ..Default::default()
         },
-        allowed_mentions: Some(AllowedMentions { replied_user: false })
+        allowed_mentions: Some(AllowedMentions {
+            replied_user: false,
+        }),
     };
 }
 

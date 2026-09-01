@@ -1,15 +1,13 @@
-use pluxer_backend::{
-    bot::BackendBot,
-    embed::{Embed, EmbedField},
-    message::BackendMessage,
-    user::BackendUser,
-};
+use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
 use crate::{
     bot::{
-        PluxerContext, command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder}, commands::system::{create::CreateSystemCommand, delete::DeleteSystemCommand},
-    }, database::DatabaseExtension,
+        PluxerContext,
+        command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder},
+        commands::system::{create::CreateSystemCommand, delete::DeleteSystemCommand},
+    },
+    database::DatabaseExtension,
 };
 
 mod create;
@@ -41,7 +39,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some("You do not have a system. Create one with `pl!system new <name>`".into()),
+                    Some(format!("You do not have a system. Create one with `{}`", CreateSystemCommand::USAGE)),
                     None,
                     Some(message),
                 )
@@ -50,20 +48,17 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
             return Ok(());
         };
 
-        let mut fields = vec![];
+        let mut description = vec![];
 
-        if let Some(tag) = system.tag {
-            fields.push(EmbedField {
-                name: "Tag".into(),
-                value: tag,
-                inline: true,
-            });
-        }
+        system.description.map(|it| description.push(it));
+
+        system
+            .tag
+            .map(|it| description.push(format!("**Tag:** {}", it)));
 
         let embed = Embed {
             title: Some(system.name),
-            description: system.description,
-            fields,
+            description: Some(description.join("\n")),
             footer: Some(format!("System ID: {}", system.id)),
             ..Default::default()
         };

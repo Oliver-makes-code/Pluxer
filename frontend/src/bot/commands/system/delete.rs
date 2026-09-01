@@ -1,16 +1,23 @@
 use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
-use crate::{bot::{PluxerContext, command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single, node::unix::UnixParameter}}, database::DatabaseExtension};
+use crate::{
+    bot::{
+        PluxerContext,
+        command_parser::{
+            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
+            node::unix::UnixParameter,
+        },
+    },
+    database::DatabaseExtension,
+};
 
 pub struct DeleteSystemCommand;
 
 impl DeleteSystemCommand {
     const YES: &str = "yes";
 
-    const UNIX_PARAMETERS: &[UnixParameter] = &[
-        UnixParameter::flag(Self::YES, &["yes", "y"]),
-    ];
+    const UNIX_PARAMETERS: &[UnixParameter] = &[UnixParameter::flag(Self::YES, &["yes", "y"])];
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["delete", "remove", "del", "rem"], |command| {
