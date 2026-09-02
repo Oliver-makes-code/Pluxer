@@ -1,10 +1,11 @@
 use pluxer_backend::PluxerApi;
 use pluxer_database::{
-    entities::{DatabaseId, member, system, user},
+    entities::{DatabaseId, member, proxy, system, user},
     model::{member::MemberModel, system::SystemModel},
     sea_orm::{
         ActiveModelTrait, ActiveValue, ColumnTrait, DbErr, EntityTrait, PaginatorTrait,
-        QueryFilter, entity::prelude::async_trait::async_trait, sqlx::types::chrono::Utc,
+        QueryFilter, QuerySelect, entity::prelude::async_trait::async_trait,
+        sqlx::types::chrono::Utc,
     },
 };
 use ulid::Ulid;
@@ -202,6 +203,23 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         return Ok((member_id, member_id_hash));
     }
 
+    async fn fetch_member_id_by_name(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        name: &str,
+    ) -> Result<Option<Ulid>, DbErr> {
+        let member: Option<DatabaseId> = member::Entity::find()
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(member::Column::Name.eq(name.to_ascii_lowercase()))
+            .select_only()
+            .column(member::Column::Id)
+            .into_tuple()
+            .one(&context.database_connection)
+            .await?;
+
+        return Ok(member.map(Into::into));
+    }
+
     async fn fetch_member_by_name(
         context: &PluxerContext<Self>,
         system_id: Ulid,
@@ -210,6 +228,23 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         let member = member::Entity::find()
             .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
             .filter(member::Column::Name.eq(name.to_ascii_lowercase()))
+            .one(&context.database_connection)
+            .await?;
+
+        return Ok(member.map(Into::into));
+    }
+
+    async fn fetch_member_id_by_hash(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        id_hash: u32,
+    ) -> Result<Option<Ulid>, DbErr> {
+        let member: Option<DatabaseId> = member::Entity::find()
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(member::Column::IdHash.eq(id_hash as i32))
+            .select_only()
+            .column(member::Column::Id)
+            .into_tuple()
             .one(&context.database_connection)
             .await?;
 
@@ -228,6 +263,19 @@ pub trait DatabaseExtension: PluxerApi + Sized {
             .await?;
 
         return Ok(member.map(Into::into));
+    }
+
+    async fn member_exists(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+    ) -> Result<bool, DbErr> {
+        let count = member::Entity::find_by_id(DatabaseId::from(member_id))
+            .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .count(&context.database_connection)
+            .await?;
+
+        return Ok(count != 0);
     }
 
     async fn fetch_member_by_id(
@@ -283,6 +331,103 @@ pub trait DatabaseExtension: PluxerApi + Sized {
     ) -> Result<(), DbErr> {
         member::Entity::delete_by_id(DatabaseId::from(member_id))
             .filter(member::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .exec(&context.database_connection)
+            .await?;
+
+        return Ok(());
+    }
+
+    async fn create_member_proxy(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+        proxy: String,
+    ) -> Result<(), DbErr> {
+        let proxy = proxy::ActiveModel {
+            id: ActiveValue::Set(DatabaseId::from(Ulid::generate())),
+            member_id: ActiveValue::Set(DatabaseId::from(member_id)),
+            system_id: ActiveValue::Set(DatabaseId::from(system_id)),
+            proxy: ActiveValue::Set(proxy),
+        };
+
+        proxy.insert(&context.database_connection).await?;
+
+        return Ok(());
+    }
+
+    async fn fetch_member_proxies(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+    ) -> Result<Vec<String>, DbErr> {
+        let proxies = proxy::Entity::find()
+            .filter(proxy::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(proxy::Column::MemberId.eq(DatabaseId::from(member_id)))
+            .select_only()
+            .column(proxy::Column::Proxy)
+            .into_tuple()
+            .all(&context.database_connection)
+            .await?;
+
+        return Ok(proxies);
+    }
+
+    async fn fetch_system_proxies(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+    ) -> Result<Vec<(String, Ulid)>, DbErr> {
+        let proxies: Vec<(String, DatabaseId)> = proxy::Entity::find()
+            .filter(proxy::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .select_only()
+            .column(proxy::Column::Proxy)
+            .column(proxy::Column::MemberId)
+            .into_tuple()
+            .all(&context.database_connection)
+            .await?;
+
+        return Ok(proxies.into_iter().map(|it| (it.0, it.1.into())).collect());
+    }
+
+    async fn has_member_proxy(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+        proxy: &str,
+    ) -> Result<bool, DbErr> {
+        let count = proxy::Entity::find()
+            .filter(proxy::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(proxy::Column::MemberId.eq(DatabaseId::from(member_id)))
+            .filter(proxy::Column::Proxy.eq(proxy))
+            .count(&context.database_connection)
+            .await?;
+
+        return Ok(count != 0);
+    }
+
+    async fn has_system_proxy(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        proxy: &str,
+    ) -> Result<bool, DbErr> {
+        let count = proxy::Entity::find()
+            .filter(proxy::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(proxy::Column::Proxy.eq(proxy))
+            .count(&context.database_connection)
+            .await?;
+
+        return Ok(count != 0);
+    }
+
+    async fn delete_member_proxy(
+        context: &PluxerContext<Self>,
+        system_id: Ulid,
+        member_id: Ulid,
+        proxy: &str,
+    ) -> Result<(), DbErr> {
+        proxy::Entity::delete_many()
+            .filter(proxy::Column::SystemId.eq(DatabaseId::from(system_id)))
+            .filter(proxy::Column::MemberId.eq(DatabaseId::from(member_id)))
+            .filter(proxy::Column::Proxy.eq(proxy))
             .exec(&context.database_connection)
             .await?;
 

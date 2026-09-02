@@ -2,7 +2,9 @@ use async_trait::async_trait;
 use fluxer_builders::MessagePayloadData;
 use fluxer_core::{Channel, Error, Message, Webhook};
 use fluxer_rest::{Rest, RestError};
-use fluxer_types::{ApiChannel, ApiMessage, ApiMessageReference, ApiUser, ApiWebhook, Routes, Snowflake};
+use fluxer_types::{
+    ApiChannel, ApiMessage, ApiMessageReference, ApiUser, ApiWebhook, Routes, Snowflake,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{bot::BackendBot, embed::Embed, fluxer::FluxerApi};
@@ -68,19 +70,26 @@ impl BackendBot for Rest {
     }
 
     async fn fetch_webhooks(&self, channel_id: &Snowflake) -> Result<Vec<Webhook>, Error> {
-        let webhooks = self.get::<Vec<ApiWebhook>>(&Routes::channel_webhooks(channel_id)).await?;
+        let webhooks = self
+            .get::<Vec<ApiWebhook>>(&Routes::channel_webhooks(channel_id))
+            .await?;
 
         return Ok(webhooks.iter().map(Webhook::from_api).collect());
     }
 
     async fn create_webhook(&self, channel_id: &Snowflake, name: &str) -> Result<Webhook, Error> {
-        let webhook = self.post::<ApiWebhook>(&Routes::channel_webhooks(channel_id), Some(&WebhookCreatePayloadData {
-            name: name.to_string(),
-            avatar_url: None
-        })).await?;
+        let webhook = self
+            .post::<ApiWebhook>(
+                &Routes::channel_webhooks(channel_id),
+                Some(&WebhookCreatePayloadData {
+                    name: name.to_string(),
+                    avatar_url: None,
+                }),
+            )
+            .await?;
 
         return Ok(Webhook::from_api(&webhook));
-    } 
+    }
 
     async fn send_message_webhook(
         &self,

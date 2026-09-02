@@ -25,4 +25,12 @@ impl BackendMessage for Message {
     fn channel_id(&self) -> &Snowflake {
         return &self.channel_id;
     }
+
+    fn attachments(&self) -> Vec<String> {
+        return self
+            .attachments
+            .iter()
+            .filter_map(|it| it.url.clone())
+            .collect();
+    }
 }

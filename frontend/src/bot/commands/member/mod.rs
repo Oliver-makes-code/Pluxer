@@ -11,10 +11,10 @@ use crate::{
             CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
         },
         commands::{
-            NAME, base64_to_u32,
+            base64_to_u32,
             member::{
                 create::CreateMemberCommand, delete::DeleteMemberCommand,
-                update::UpdateMemberCommand,
+                proxy::MemberProxyCommand, update::UpdateMemberCommand,
             },
             system::create::CreateSystemCommand,
             u32_to_base64,
@@ -25,11 +25,15 @@ use crate::{
 
 pub mod create;
 pub mod delete;
+pub mod proxy;
 pub mod update;
 
 pub struct MemberCommand;
 
 impl MemberCommand {
+    /// This is different from [super::NAME] so that names can be a separate argument in the update command.
+    pub const MEMBER_NAME: &str = "member_name";
+
     pub const USAGE: &str = "pl!member <name>";
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
@@ -37,33 +41,60 @@ impl MemberCommand {
             command.executes(MemberCommand);
 
             CreateMemberCommand::append(command);
-            DeleteMemberCommand::append(command);
-            UpdateMemberCommand::append(command);
 
-            command.greedy_string("name", |_| {});
+            command.string(Self::MEMBER_NAME, |command| {
+                DeleteMemberCommand::append(command);
+                UpdateMemberCommand::append(command);
+                MemberProxyCommand::append(command);
+            });
         });
     }
 
-    pub fn member_to_embed(member: MemberModel) -> Embed {
+    pub fn member_to_embed(member: MemberModel, proxies: &[String]) -> Embed {
         let mut description = vec![];
 
         member.description.map(|it| description.push(it));
 
-        member
-            .pronouns
-            .map(|it| description.push(format!("\n**Pronouns:** {}", it)));
+        {
+            let mut info_row = vec![];
 
-        description.push(format!("\n-# Unique Member Name: `{}`", member.name));
-        description.push(format!("-# Member ID: `{}`", member.id));
-        description.push(format!(
-            "-# Member Shorthand ID: `{}`",
-            u32_to_base64(member.id_hash)
-        ));
-        description.push(format!("-# System ID: `{}`", member.system_id));
+            member
+                .pronouns
+                .map(|it| info_row.push(format!("\n**Pronouns:** {}", it)));
+
+            if !info_row.is_empty() {
+                description.push(format!("\n{}", info_row.join("\n")));
+            }
+        }
+
+        if !proxies.is_empty() {
+            let mut proxies_row = vec![];
+
+            proxies_row.push("**Proxies:**".to_string());
+            for proxy in proxies {
+                proxies_row.push(format!("- `{}`", proxy));
+            }
+
+            description.push(format!("\n{}", proxies_row.join("\n")));
+        }
+
+        {
+            let mut id_row = vec![];
+
+            id_row.push(format!("-# Unique Member Name: `{}`", member.name));
+            id_row.push(format!("-# Member ID: `{}`", member.id));
+            id_row.push(format!(
+                "-# Member Shorthand ID: `{}`",
+                u32_to_base64(member.id_hash)
+            ));
+            id_row.push(format!("-# System ID: `{}`", member.system_id));
+
+            description.push(format!("\n{}", id_row.join("\n")));
+        }
 
         return Embed {
             title: Some(member.display_name.unwrap_or(member.name)),
-            description: Some(description.join("\n")),
+            description: Some(description.join("\n").trim().into()),
             color: member.color.unwrap_or(0),
             thumbnail_url: member.avatar_url,
             ..Default::default()
@@ -81,13 +112,33 @@ impl MemberCommand {
             }
         }
 
-        if let Some(member_id) = Ulid::try_from(name).ok() {
+        if let Ok(member_id) = Ulid::try_from(name) {
             if let Some(member) = A::fetch_member_by_id(context, system_id, member_id).await? {
                 return Ok(Some(member));
             }
         }
 
         return Ok(A::fetch_member_by_name(context, system_id, name).await?);
+    }
+
+    async fn fetch_member_id<'a, A: DatabaseExtension>(
+        context: &'a PluxerContext<A>,
+        system_id: Ulid,
+        name: &str,
+    ) -> anyhow::Result<Option<Ulid>> {
+        if let Some(id_hash) = base64_to_u32(name) {
+            if let Some(member) = A::fetch_member_id_by_hash(context, system_id, id_hash).await? {
+                return Ok(Some(member));
+            }
+        }
+
+        if let Ok(member_id) = Ulid::try_from(name) {
+            if A::member_exists(context, system_id, member_id).await? {
+                return Ok(Some(member_id));
+            }
+        }
+
+        return Ok(A::fetch_member_id_by_name(context, system_id, name).await?);
     }
 }
 
@@ -116,7 +167,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
             return Ok(());
         };
 
-        let Some(name) = get_argument_single(args, NAME) else {
+        let Some(name) = get_argument_single(args, Self::MEMBER_NAME) else {
             context
                 .bot
                 .send_message(
@@ -147,12 +198,14 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
             return Ok(());
         };
 
+        let proxies = A::fetch_member_proxies(context, system_id, member.id).await?;
+
         context
             .bot
             .send_message(
                 message.channel_id(),
                 None,
-                Some(Self::member_to_embed(member)),
+                Some(Self::member_to_embed(member, &proxies)),
                 Some(message),
             )
             .await?;

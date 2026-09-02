@@ -18,15 +18,13 @@ use crate::{
 pub struct DeleteMemberCommand;
 
 impl DeleteMemberCommand {
-    pub const USAGE: &str = "pl!member delete [-y] <name>";
+    pub const USAGE: &str = "pl!member <name> delete [-y]";
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(DELETE_VARIANTS, |command| {
             command.executes(DeleteMemberCommand);
 
-            command.unix(YES_UNIX, |command| {
-                command.greedy_string(NAME, |_| {});
-            });
+            command.unix(YES_UNIX, |_| {});
         });
     }
 }
@@ -56,7 +54,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
             return Ok(());
         };
 
-        let Some(name) = get_argument_single(args, NAME) else {
+        let Some(name) = get_argument_single(args, MemberCommand::MEMBER_NAME) else {
             context
                 .bot
                 .send_message(

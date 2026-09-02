@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
@@ -24,8 +26,6 @@ pub struct UpdateMemberCommand {
 }
 
 impl UpdateMemberCommand {
-    const MEMBER_NAME: &str = "member_name";
-
     const UNIX_PARAMETERS_SET: &[UnixParameter] = &[
         UnixParameter::value(NAME, NAME_VARIANTS),
         UnixParameter::value(AVATAR_URL, AVATAR_URL_VARIANTS),
@@ -45,17 +45,17 @@ impl UpdateMemberCommand {
     fn usage(&self) -> String {
         let Some(subcommand) = self.subcommand else {
             if self.clear {
-                return "pl!member clear [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--name=\"<name>\"] <name>".into();
+                return "pl!member <name> clear [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--name=\"<name>\"]".into();
             }
 
-            return "pl!member update [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--name=\"<name>\"] <name>".into();
+            return "pl!member <name> update [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--name=\"<name>\"]".into();
         };
 
-        return format!(
-            "pl!maember {0} <name>{1} <{0}>",
-            subcommand,
-            if self.clear { " clear" } else { "" }
-        );
+        if self.clear {
+            return format!("pl!maember <name> {subcommand} clear",);
+        }
+
+        return format!("pl!maember <name> {0} {0}", subcommand,);
     }
 
     pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
@@ -65,9 +65,7 @@ impl UpdateMemberCommand {
                 clear: false,
             });
 
-            command.unix(&Self::UNIX_PARAMETERS_SET, |command| {
-                command.greedy_string(Self::MEMBER_NAME, |_| {});
-            });
+            command.unix(&Self::UNIX_PARAMETERS_SET, |_| {});
         });
 
         command.literal(CLEAR_VARIANTS, |command| {
@@ -90,18 +88,16 @@ impl UpdateMemberCommand {
 
         for (name, variants, allow_clear) in SUBCOMMANDS {
             command.literal(variants, |command| {
-                command.string(Self::MEMBER_NAME, |command| {
-                    if *allow_clear {
-                        command.literal(CLEAR_VARIANTS, |command| {
-                            command.executes(UpdateMemberCommand {
-                                subcommand: Some(name),
-                                clear: true,
-                            });
+                if *allow_clear {
+                    command.literal(CLEAR_VARIANTS, |command| {
+                        command.executes(UpdateMemberCommand {
+                            subcommand: Some(name),
+                            clear: true,
                         });
-                    }
+                    });
+                }
 
-                    command.greedy_string(name, |_| {});
-                });
+                command.greedy_string(name, |_| {});
 
                 command.executes(UpdateMemberCommand {
                     subcommand: Some(name),
@@ -137,7 +133,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
             return Ok(());
         };
 
-        let Some(member_name) = get_argument_single(args, Self::MEMBER_NAME) else {
+        let Some(member_name) = get_argument_single(args, MemberCommand::MEMBER_NAME) else {
             context
                 .bot
                 .send_message(
@@ -184,7 +180,15 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
         }
 
         let description = extract_arg(args, DESCRIPTION, self.subcommand, self.clear);
-        let avatar_url = extract_arg(args, AVATAR_URL, self.subcommand, self.clear);
+        let mut avatar_url = extract_arg(args, AVATAR_URL, self.subcommand, self.clear);
+
+        let attachments = message.attachments();
+        let attachment = attachments.first().map(Deref::deref);
+
+        if self.subcommand.is_some_and(|it| it == AVATAR_URL) {
+            avatar_url = avatar_url.map(|it| it.or(attachment));
+        }
+
         let pronouns = extract_arg(args, PRONOUNS, self.subcommand, self.clear);
         let display_name = extract_arg(args, DISPLAY_NAME, self.subcommand, self.clear);
         let color = extract_arg(args, COLOR, self.subcommand, self.clear)

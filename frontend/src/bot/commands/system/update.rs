@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
@@ -142,7 +144,15 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateSystemCom
 
         let description = extract_arg(args, DESCRIPTION, self.subcommand, self.clear);
         let tag = extract_arg(args, TAG, self.subcommand, self.clear);
-        let avatar_url = extract_arg(args, AVATAR_URL, self.subcommand, self.clear);
+        let mut avatar_url = extract_arg(args, AVATAR_URL, self.subcommand, self.clear);
+
+        let attachments = message.attachments();
+        let attachment = attachments.first().map(Deref::deref);
+
+        if self.subcommand.is_some_and(|it| it == AVATAR_URL) {
+            avatar_url = avatar_url.map(|it| it.or(attachment));
+        }
+
         let pronouns = extract_arg(args, PRONOUNS, self.subcommand, self.clear);
         let display_name = extract_arg(args, DISPLAY_NAME, self.subcommand, self.clear);
         let color = extract_arg(args, COLOR, self.subcommand, self.clear)
@@ -163,6 +173,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateSystemCom
             color,
         )
         .await?;
+
         context
             .bot
             .send_message(

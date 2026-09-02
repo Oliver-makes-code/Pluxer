@@ -1,7 +1,10 @@
-use std::{fs, path::Path, sync::{Arc}, time::Duration};
+use std::{fs, path::Path, sync::Arc, time::Duration};
 
 use moka::{future::Cache, policy::EvictionPolicy};
-use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser, webhook::BackendWebhook};
+use pluxer_backend::{
+    bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
+    webhook::BackendWebhook,
+};
 use pluxer_database::sea_orm::DatabaseConnection;
 use tokio::sync::OnceCell;
 use ulid::Ulid;
@@ -97,7 +100,10 @@ impl<A: DatabaseExtension> PluxerContext<A> {
     }
 
     async fn get_id(&self) -> Result<&A::Id, A::Error> {
-        return self.user_id.get_or_try_init(async || self.bot.get_self_id().await).await;
+        return self
+            .user_id
+            .get_or_try_init(async || self.bot.get_self_id().await)
+            .await;
     }
 
     async fn fetch_webhook(&self, channel_id: &A::Id) -> anyhow::Result<A::Webhook> {
@@ -107,15 +113,22 @@ impl<A: DatabaseExtension> PluxerContext<A> {
 
         for webhook in self.bot.fetch_webhooks(channel_id).await? {
             if webhook.owner().id() == self.get_id().await? {
-                self.webhook_cache.insert(channel_id.clone(), webhook.clone()).await;
+                self.webhook_cache
+                    .insert(channel_id.clone(), webhook.clone())
+                    .await;
 
                 return Ok(webhook);
             }
         }
 
-        let webhook = self.bot.create_webhook(channel_id, "Pluxer Webhook").await?;
+        let webhook = self
+            .bot
+            .create_webhook(channel_id, "Pluxer Webhook")
+            .await?;
 
-        self.webhook_cache.insert(channel_id.clone(), webhook.clone()).await;
+        self.webhook_cache
+            .insert(channel_id.clone(), webhook.clone())
+            .await;
 
         return Ok(webhook);
     }

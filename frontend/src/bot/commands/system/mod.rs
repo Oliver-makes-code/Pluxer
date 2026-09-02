@@ -42,21 +42,31 @@ impl SystemCommand {
 
         system.description.map(|it| description.push(it));
 
-        system
-            .pronouns
-            .map(|it| description.push(format!("\n**Pronouns:** {}", it)));
+        {
+            let mut info_row = vec![];
 
-        system
-            .tag
-            .map(|it| description.push(format!("\n**Tag:** {}", it)));
+            system
+                .pronouns
+                .map(|it| description.push(format!("**Pronouns:** {}", it)));
 
-        description.push(format!("\n**Members:**: {}", member_count));
+            system
+                .tag
+                .map(|it| description.push(format!("**Tag:** {}", it)));
 
-        description.push(format!("\n-# System ID: `{}`", system.id));
+            info_row.push(format!("**Members:**: {}", member_count));
+
+            if !info_row.is_empty() {
+                description.push(format!("\n{}", info_row.join("\n")));
+            }
+        }
+
+        {
+            description.push(format!("\n-# System ID: `{}`", system.id));
+        }
 
         return Embed {
             title: Some(system.display_name.unwrap_or(system.name)),
-            description: Some(description.join("\n")),
+            description: Some(description.join("\n").trim().into()),
             color: system.color.unwrap_or(0),
             thumbnail_url: system.avatar_url,
             ..Default::default()

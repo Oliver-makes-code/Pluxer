@@ -12,4 +12,6 @@ pub trait BackendMessage: Send + Sync {
     fn content(&self) -> &str;
 
     fn created_by_bot(&self) -> bool;
+
+    fn attachments(&self) -> Vec<String>;
 }
