@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use fluxer_builders::{AttachmentPayload, MessagePayloadData, build_multipart_form};
+use fluxer_builders::{AttachmentPayload, MessagePayloadData};
 use fluxer_core::{
     Channel,
     Error::{self, WebhookTokenRequired},

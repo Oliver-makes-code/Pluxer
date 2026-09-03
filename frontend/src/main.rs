@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(checked_type_aliases)]
+#![feature(checked_type_aliases, duration_constructors)]
 
 use std::{fs, sync::Arc, time::Duration};
 

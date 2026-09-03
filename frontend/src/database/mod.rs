@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use pluxer_backend::PluxerApi;
 use pluxer_database::{
     entities::{DatabaseId, member, proxy, system, user},
@@ -42,6 +44,8 @@ where
     }
 }
 
+const MESSAGE_ALIVE_TIME: Duration = Duration::from_days(7);
+
 #[async_trait]
 pub trait DatabaseExtension: PluxerApi + Sized {
     async fn fetch_system_id(
@@ -53,6 +57,14 @@ pub trait DatabaseExtension: PluxerApi + Sized {
         context: &PluxerContext<Self>,
         user_id: &<Self as PluxerApi>::Id,
         system_id: Option<Ulid>,
+    ) -> Result<(), DbErr>;
+
+    async fn create_message(
+        context: &PluxerContext<Self>,
+        message_id: &<Self as PluxerApi>::Id,
+        user_id: &<Self as PluxerApi>::Id,
+        system_id: Ulid,
+        member_id: Ulid,
     ) -> Result<(), DbErr>;
 
     async fn create_system(

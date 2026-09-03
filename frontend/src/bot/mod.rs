@@ -183,7 +183,8 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             Cow::Borrowed(username)
         };
 
-        self.bot
+        let new_message = self
+            .bot
             .send_message_webhook(
                 &webhook,
                 Some(trimmed_message_content.to_string()),
@@ -191,11 +192,25 @@ impl<A: DatabaseExtension> PluxerContext<A> {
                 message.referenced_message(),
                 &files,
                 &username,
-                member.avatar_url.as_deref().or(system.avatar_url.as_deref()),
+                member
+                    .avatar_url
+                    .as_deref()
+                    .or(system.avatar_url.as_deref()),
             )
             .await?;
 
-        self.bot.delete_message(message.channel_id(), message.id()).await?;
+        A::create_message(
+            self,
+            new_message.id(),
+            message.author().id(),
+            system.id,
+            member.id,
+        )
+        .await?;
+
+        self.bot
+            .delete_message(message.channel_id(), message.id())
+            .await?;
 
         return Ok(());
     }
@@ -265,7 +280,8 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             .await?
             .ok_or(NoMemberToProxyError)?;
 
-        self.resend_message(message, &member, trimmed_message_content).await?;
+        self.resend_message(message, &member, trimmed_message_content)
+            .await?;
 
         return Ok(());
     }

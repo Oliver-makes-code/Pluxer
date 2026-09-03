@@ -1,14 +1,17 @@
 use pluxer_backend::{PluxerApi, fluxer::FluxerApi, id::BackendId};
 use pluxer_database::{
-    entities::{DatabaseSnowflake, user},
+    entities::{DatabaseSnowflake, message, user},
     sea_orm::{
         ActiveModelTrait, ActiveValue, DbErr, EntityTrait,
-        entity::prelude::async_trait::async_trait,
+        entity::prelude::async_trait::async_trait, sqlx::types::chrono::Utc,
     },
 };
 use ulid::Ulid;
 
-use crate::{bot::PluxerContext, database::DatabaseExtension};
+use crate::{
+    bot::PluxerContext,
+    database::{DatabaseExtension, MESSAGE_ALIVE_TIME},
+};
 
 #[async_trait]
 impl DatabaseExtension for FluxerApi {
@@ -52,6 +55,40 @@ impl DatabaseExtension for FluxerApi {
             id: ActiveValue::Set(user_id),
             instance_url: ActiveValue::Set(context.instance_url.to_string()),
             system_id: ActiveValue::Set(system_id.into()),
+        };
+
+        model.insert(&context.database_connection).await?;
+
+        return Ok(());
+    }
+
+    async fn create_message(
+        context: &PluxerContext<Self>,
+        message_id: &<Self as PluxerApi>::Id,
+        user_id: &<Self as PluxerApi>::Id,
+        system_id: Ulid,
+        member_id: Ulid,
+    ) -> Result<(), DbErr> {
+        let Some(snowflake) = message_id.as_snowflake() else {
+            return Ok(());
+        };
+
+        let message_id = DatabaseSnowflake(snowflake as i64);
+
+        let Some(snowflake) = user_id.as_snowflake() else {
+            return Ok(());
+        };
+
+        let user_id = DatabaseSnowflake(snowflake as i64);
+
+        let model = message::fluxer::ActiveModel {
+            id: ActiveValue::Set(message_id),
+            author_id: ActiveValue::Set(user_id),
+            instance_url: ActiveValue::Set(context.instance_url.to_string()),
+            system_id: ActiveValue::Set(system_id.into()),
+            member_id: ActiveValue::Set(member_id.into()),
+
+            expires_at: ActiveValue::Set(Utc::now() + MESSAGE_ALIVE_TIME),
         };
 
         model.insert(&context.database_connection).await?;

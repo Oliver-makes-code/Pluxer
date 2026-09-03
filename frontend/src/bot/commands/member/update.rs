@@ -170,7 +170,10 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
 
         let has_avatar_image = message.attachments().next().is_some();
 
-        if !(self.subcommand == Some(AVATAR_URL) && has_avatar_image) && !self.clear && args.len() == 1 {
+        if !(self.subcommand == Some(AVATAR_URL) && has_avatar_image)
+            && !self.clear
+            && args.len() == 1
+        {
             context
                 .bot
                 .send_message(
@@ -191,10 +194,12 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
         let attachment = message.attachments().next();
         let attachment = attachment.as_ref().map(|it| it.file_url.deref());
 
-        if let Some(attachment) = attachment && self.subcommand.is_some_and(|it| it == AVATAR_URL) {
+        if let Some(attachment) = attachment
+            && self.subcommand.is_some_and(|it| it == AVATAR_URL)
+        {
             avatar_url = match avatar_url {
                 DatabaseUpdate::Keep => DatabaseUpdate::Set(Some(attachment)),
-                DatabaseUpdate::Set(old) => DatabaseUpdate::Set(old.or(Some(attachment)))
+                DatabaseUpdate::Set(old) => DatabaseUpdate::Set(old.or(Some(attachment))),
             };
         }
 
