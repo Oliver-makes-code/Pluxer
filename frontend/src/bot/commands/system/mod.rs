@@ -93,6 +93,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -110,6 +111,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -126,6 +128,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                     A::fetch_member_count(context, system_id).await?,
                 )),
                 Some(message),
+                &[],
             )
             .await?;
 

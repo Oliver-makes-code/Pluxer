@@ -161,6 +161,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -175,6 +176,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -192,6 +194,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -207,6 +210,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
                 None,
                 Some(Self::member_to_embed(member, &proxies)),
                 Some(message),
+                &[],
             )
             .await?;
 

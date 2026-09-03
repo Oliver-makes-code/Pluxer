@@ -2,6 +2,11 @@ use async_trait::async_trait;
 
 use crate::{PluxerApi, embed::Embed};
 
+pub struct FileUpload {
+    pub file_name: String,
+    pub data: Vec<u8>,
+}
+
 #[async_trait]
 pub trait BackendBot: Send + Sync {
     type Api: PluxerApi;
@@ -27,7 +32,8 @@ pub trait BackendBot: Send + Sync {
         content: Option<String>,
         embed: Option<Embed>,
         referenced_message: Option<&<Self::Api as PluxerApi>::Message>,
-    ) -> Result<Option<<Self::Api as PluxerApi>::Message>, <Self::Api as PluxerApi>::Error>;
+        file_uploads: &[FileUpload],
+    ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
 
     async fn send_message(
         &self,
@@ -35,6 +41,7 @@ pub trait BackendBot: Send + Sync {
         content: Option<String>,
         embed: Option<Embed>,
         referenced_message: Option<&<Self::Api as PluxerApi>::Message>,
+        file_uploads: &[FileUpload],
     ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
 
     async fn get_channel(

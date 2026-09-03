@@ -127,6 +127,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -141,6 +142,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
                     Some(format!("Usage: `{}`", self.usage())),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -159,6 +161,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -173,6 +176,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
                     Some(format!("Usage: `{}`", self.usage())),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -183,7 +187,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
         let mut avatar_url = extract_arg(args, AVATAR_URL, self.subcommand, self.clear);
 
         let attachments = message.attachments();
-        let attachment = attachments.first().map(Deref::deref);
+        let attachment = attachments.first().map(|it| it.file_url.deref());
 
         if self.subcommand.is_some_and(|it| it == AVATAR_URL) {
             avatar_url = avatar_url.map(|it| it.or(attachment));
@@ -216,6 +220,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
                 Some("Member info updated! View them with `pl!member`".into()),
                 None,
                 Some(message),
+                &[],
             )
             .await?;
 

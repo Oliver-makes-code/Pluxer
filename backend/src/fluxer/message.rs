@@ -1,7 +1,11 @@
 use fluxer_core::Message;
 use fluxer_types::Snowflake;
 
-use crate::{fluxer::FluxerApi, message::BackendMessage, user::BackendUser};
+use crate::{
+    fluxer::FluxerApi,
+    message::{BackendMessage, FileAttachment},
+    user::BackendUser,
+};
 
 impl BackendMessage for Message {
     type Api = FluxerApi;
@@ -26,11 +30,16 @@ impl BackendMessage for Message {
         return &self.channel_id;
     }
 
-    fn attachments(&self) -> Vec<String> {
+    fn attachments(&self) -> Vec<FileAttachment> {
         return self
             .attachments
             .iter()
-            .filter_map(|it| it.url.clone())
+            .filter_map(|it| {
+                Some(FileAttachment {
+                    file_name: it.filename.clone(),
+                    file_url: it.url.clone()?,
+                })
+            })
             .collect();
     }
 }

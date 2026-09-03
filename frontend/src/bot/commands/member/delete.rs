@@ -48,6 +48,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -62,6 +63,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -79,6 +81,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -93,6 +96,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
                     Some(format!("Are you sure you want to delete this member? Rerun the command as `pl!system delete -y {}` to confirm.", name)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -108,6 +112,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
                 Some("Member deleted.".into()),
                 None,
                 Some(message),
+                &[],
             )
             .await?;
 

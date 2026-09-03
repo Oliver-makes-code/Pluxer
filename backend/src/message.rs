@@ -1,5 +1,10 @@
 use crate::PluxerApi;
 
+pub struct FileAttachment {
+    pub file_name: String,
+    pub file_url: String,
+}
+
 pub trait BackendMessage: Send + Sync {
     type Api: PluxerApi;
 
@@ -13,5 +18,5 @@ pub trait BackendMessage: Send + Sync {
 
     fn created_by_bot(&self) -> bool;
 
-    fn attachments(&self) -> Vec<String>;
+    fn attachments(&self) -> Vec<FileAttachment>;
 }

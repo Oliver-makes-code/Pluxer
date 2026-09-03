@@ -61,6 +61,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCom
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -75,6 +76,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCom
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -92,6 +94,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCom
                     Some(format!("You already have a member named {}.", name)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -127,6 +130,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCom
                 Some(format!("Member created! View them with `{}`\n-# Member ID: {}\n-# Member Shorthand ID: {}", MemberCommand::USAGE, member_id, u32_to_base64(member_id_hash))),
                 None,
                 Some(message),
+                    &[],
             )
             .await?;
 

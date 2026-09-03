@@ -40,6 +40,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
                     Some("You already do not have a system.".into()),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -54,6 +55,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
                     Some("Are you sure you want to delete your system? Rerun the command as `pl!system delete -y` to confirm.".into()),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -68,6 +70,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
                     Some("System deleted.".into()),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
         } else {
@@ -78,6 +81,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteSystemCom
                     Some("System detached from this accout.".into()),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
         }

@@ -80,7 +80,7 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             footer: Some(format!("Error ID: {}", error_id)),
 
             ..Default::default()
-        }), Some(message)).await;
+        }), Some(message), &[]).await;
 
         if let Err(err) = result {
             error_report += &format!("\n\n{}", err);

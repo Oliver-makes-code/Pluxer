@@ -2142,6 +2142,7 @@ dependencies = [
  "fluxer-types",
  "fluxer-util",
  "fluxer-ws",
+ "reqwest",
  "serde",
  "serde_json",
 ]

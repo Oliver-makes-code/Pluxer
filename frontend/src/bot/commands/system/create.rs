@@ -60,6 +60,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                     Some("You have already created a system. View it with `pl!system`".into()),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -74,6 +75,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -115,6 +117,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
                 )),
                 None,
                 Some(message),
+                &[],
             )
             .await?;
 

@@ -1,13 +1,22 @@
 use async_trait::async_trait;
-use fluxer_builders::MessagePayloadData;
-use fluxer_core::{Channel, Error, Message, Webhook};
-use fluxer_rest::{Rest, RestError};
+use fluxer_builders::{AttachmentPayload, MessagePayloadData, build_multipart_form};
+use fluxer_core::{
+    Channel,
+    Error::{self, WebhookTokenRequired},
+    Message, Webhook,
+};
+use fluxer_rest::Rest;
 use fluxer_types::{
     ApiChannel, ApiMessage, ApiMessageReference, ApiUser, ApiWebhook, Routes, Snowflake,
 };
+use reqwest::multipart::{Form, Part};
 use serde::{Deserialize, Serialize};
 
-use crate::{bot::BackendBot, embed::Embed, fluxer::FluxerApi};
+use crate::{
+    bot::{BackendBot, FileUpload},
+    embed::Embed,
+    fluxer::FluxerApi,
+};
 
 #[derive(Serialize, Deserialize)]
 struct AllowedMentions {
@@ -36,12 +45,24 @@ struct WebhookCreatePayloadData {
     pub avatar_url: Option<String>,
 }
 
-fn message_payload(
+fn message_payload<T: Serialize>(
     content: Option<String>,
     embed: Option<Embed>,
     referenced_message: Option<&Message>,
-) -> MessagePayloadDataExtension {
-    return MessagePayloadDataExtension {
+    file_uploads: &[FileUpload],
+    map_payload: impl FnOnce(MessagePayloadDataExtension) -> T,
+) -> Form {
+    let mut attachments = vec![];
+
+    for (id, upload) in file_uploads.iter().enumerate() {
+        attachments.push(AttachmentPayload {
+            id: id as u32,
+            filename: upload.file_name.clone(),
+            description: None,
+        });
+    }
+
+    let message_payload = map_payload(MessagePayloadDataExtension {
         message: MessagePayloadData {
             content: content,
             embeds: embed.map(Into::into).map(|it| vec![it]),
@@ -51,12 +72,30 @@ fn message_payload(
                 guild_id: it.guild_id.clone(),
                 kind: None,
             }),
+            attachments: Some(attachments),
             ..Default::default()
         },
         allowed_mentions: Some(AllowedMentions {
             replied_user: false,
         }),
-    };
+    });
+
+    let json_str = serde_json::to_string(&message_payload).unwrap();
+
+    let mut form = Form::new();
+
+    form = form.part("payload_json", Part::text(json_str));
+
+    for (i, file) in file_uploads.iter().enumerate() {
+        let part = Part::bytes(file.data.clone())
+            .file_name(file.file_name.to_string())
+            .mime_str("application/octet-stream")
+            .expect("valid MIME type");
+
+        form = form.part(format!("files[{i}]"), part);
+    }
+
+    return form;
 }
 
 #[async_trait]
@@ -97,22 +136,27 @@ impl BackendBot for Rest {
         content: Option<String>,
         embed: Option<Embed>,
         referenced_message: Option<&Message>,
-    ) -> Result<Option<Message>, Error> {
-        let payload = WebhookPayloadData {
-            message: message_payload(content, embed, referenced_message),
-            username: None,
-            avatar_url: None,
-        };
+        file_uploads: &[FileUpload],
+    ) -> Result<Message, Error> {
+        let payload = message_payload(
+            content,
+            embed,
+            referenced_message,
+            file_uploads,
+            |message| WebhookPayloadData {
+                message,
+                username: None,
+                avatar_url: None,
+            },
+        );
 
-        let value = webhook
-            .send(
-                self,
-                &serde_json::to_value(&payload).map_err(RestError::Json)?,
-                true,
-            )
-            .await?;
+        let token = webhook.token.as_deref().ok_or(WebhookTokenRequired)?;
 
-        return Ok(value.as_ref().map(Message::from_api));
+        let route = Routes::webhook_execute(&webhook.id, token) + "?wait=true";
+
+        let value: ApiMessage = self.post_multipart(&route, payload).await?;
+
+        return Ok(Message::from_api(&value));
     }
 
     async fn send_message(
@@ -121,13 +165,20 @@ impl BackendBot for Rest {
         content: Option<String>,
         embed: Option<Embed>,
         referenced_message: Option<&Message>,
+        file_uploads: &[FileUpload],
     ) -> Result<Message, Error> {
-        let payload = message_payload(content, embed, referenced_message);
+        let payload = message_payload(
+            content,
+            embed,
+            referenced_message,
+            &[],
+            std::convert::identity,
+        );
 
         let message: ApiMessage = self
-            .post(
+            .post_multipart(
                 &fluxer_types::Routes::channel_messages(&channel_id),
-                Some(&payload),
+                payload,
             )
             .await?;
 

@@ -64,6 +64,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -78,6 +79,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -96,6 +98,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -110,6 +113,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -124,6 +128,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -141,6 +146,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -158,6 +164,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -178,6 +185,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                         )),
                         None,
                         Some(message),
+                        &[],
                     )
                     .await?;
 
@@ -193,6 +201,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     Some(format!("Proxy tag `{}` created.", proxy)),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -212,6 +221,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                     )),
                     None,
                     Some(message),
+                    &[],
                 )
                 .await?;
 
@@ -227,6 +237,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                 Some(format!("Proxy tag `{}` removed.", proxy)),
                 None,
                 Some(message),
+                &[],
             )
             .await?;
 
