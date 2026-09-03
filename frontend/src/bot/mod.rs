@@ -257,7 +257,7 @@ impl<A: DatabaseExtension> PluxerContext<A> {
 
             let total_len = prefix.len() + suffix.len();
 
-            if content.len() <= total_len {
+            if content.len() < total_len {
                 continue;
             }
 
