@@ -33,6 +33,8 @@ pub trait BackendBot: Send + Sync {
         embed: Option<Embed>,
         referenced_message: Option<&<Self::Api as PluxerApi>::Message>,
         file_uploads: &[FileUpload],
+        username: &str,
+        avatar_url: Option<&str>,
     ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
 
     async fn send_message(
@@ -48,4 +50,10 @@ pub trait BackendBot: Send + Sync {
         &self,
         channel_id: &<Self::Api as PluxerApi>::Id,
     ) -> Result<<Self::Api as PluxerApi>::Channel, <Self::Api as PluxerApi>::Error>;
+
+    async fn delete_message(
+        &self,
+        channel_id: &<Self::Api as PluxerApi>::Id,
+        message_id: &<Self::Api as PluxerApi>::Id,
+    ) -> Result<(), <Self::Api as PluxerApi>::Error>;
 }

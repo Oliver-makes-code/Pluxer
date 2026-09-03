@@ -1,11 +1,15 @@
-use std::{fs, path::Path, sync::Arc, time::Duration};
+use std::{borrow::Cow, fs, path::Path, sync::Arc, time::Duration};
 
 use moka::{future::Cache, policy::EvictionPolicy};
 use pluxer_backend::{
-    bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
+    bot::{BackendBot, FileUpload},
+    embed::Embed,
+    message::BackendMessage,
+    user::BackendUser,
     webhook::BackendWebhook,
 };
-use pluxer_database::sea_orm::DatabaseConnection;
+use pluxer_database::{model::member::MemberModel, sea_orm::DatabaseConnection};
+use thiserror::Error;
 use tokio::sync::OnceCell;
 use ulid::Ulid;
 
@@ -34,6 +38,10 @@ impl<A: DatabaseExtension> CommandContext for PluxerContext<A> {
     type CommandData = A::Message;
 }
 
+#[derive(Debug, Error)]
+#[error("The proxies should be deleted if the member doesn't exist")]
+struct NoMemberToProxyError;
+
 impl<A: DatabaseExtension> PluxerContext<A> {
     const PREFIXES: &[&str] = &["pl!", "pl?", "pl;", "pl/"];
 
@@ -58,13 +66,12 @@ impl<A: DatabaseExtension> PluxerContext<A> {
         });
     }
 
-    async fn handle_command(
+    async fn with_error_handler(
         &self,
         message: &A::Message,
-        command_substring: &str,
+        fut: impl Future<Output = anyhow::Result<()>>,
     ) -> anyhow::Result<()> {
-        let Err(err) = parse_command(command_substring, &self.command_tree, self, message).await
-        else {
+        let Err(err) = fut.await else {
             return Ok(());
         };
 
@@ -97,6 +104,14 @@ impl<A: DatabaseExtension> PluxerContext<A> {
         fs::write(file_path, error_report)?;
 
         return Ok(());
+    }
+
+    async fn handle_command(
+        &self,
+        message: &A::Message,
+        command_substring: &str,
+    ) -> anyhow::Result<()> {
+        return parse_command(command_substring, &self.command_tree, self, message).await;
     }
 
     async fn get_id(&self) -> Result<&A::Id, A::Error> {
@@ -133,7 +148,59 @@ impl<A: DatabaseExtension> PluxerContext<A> {
         return Ok(webhook);
     }
 
-    pub async fn on_message(&self, message: &A::Message) -> anyhow::Result<()> {
+    async fn fetch(url: &str) -> Result<Vec<u8>, reqwest::Error> {
+        let response = reqwest::get(url).await?;
+
+        return Ok(response.bytes().await?.to_vec());
+    }
+
+    async fn resend_message(
+        &self,
+        message: &A::Message,
+        member: &MemberModel,
+        trimmed_message_content: &str,
+    ) -> anyhow::Result<()> {
+        let Some(system) = A::fetch_system_by_id(self, member.system_id).await? else {
+            return Ok(());
+        };
+
+        let webhook = self.fetch_webhook(message.channel_id()).await?;
+
+        let mut files = vec![];
+
+        for attachment in message.attachments() {
+            files.push(FileUpload {
+                file_name: attachment.file_name,
+                data: Self::fetch(&attachment.file_url).await?,
+            });
+        }
+
+        let username = member.display_name.as_deref().unwrap_or(&member.name);
+
+        let username = if let Some(tag) = system.tag.as_deref() {
+            Cow::Owned(format!("{} {}", username, tag))
+        } else {
+            Cow::Borrowed(username)
+        };
+
+        self.bot
+            .send_message_webhook(
+                &webhook,
+                Some(trimmed_message_content.to_string()),
+                None,
+                message.referenced_message(),
+                &files,
+                &username,
+                member.avatar_url.as_deref().or(system.avatar_url.as_deref()),
+            )
+            .await?;
+
+        self.bot.delete_message(message.channel_id(), message.id()).await?;
+
+        return Ok(());
+    }
+
+    async fn on_message_raw(&self, message: &A::Message) -> anyhow::Result<()> {
         if message.created_by_bot() {
             return Ok(());
         }
@@ -152,8 +219,60 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             return Ok(());
         }
 
-        // TODO: Proxy messages here
+        let user_id = message.author().id();
+
+        let Some(system_id) = A::fetch_system_id(self, user_id).await? else {
+            return Ok(());
+        };
+
+        let mut proxied_member = None;
+
+        let content = message.content();
+
+        let mut proxies = A::fetch_system_proxies(self, system_id).await?;
+
+        proxies.sort_by_key(|a| a.0.len());
+
+        let mut trimmed_message_content = content;
+
+        for (proxy, member_id) in A::fetch_system_proxies(self, system_id).await? {
+            let Some((prefix, suffix)) = proxy.split_once("text") else {
+                continue;
+            };
+
+            let total_len = prefix.len() + suffix.len();
+
+            if content.len() <= total_len {
+                continue;
+            }
+
+            if content.starts_with(prefix) && content.ends_with(suffix) {
+                let start = prefix.len();
+                let end = content.len() - suffix.len();
+
+                trimmed_message_content = &content[start..end];
+
+                proxied_member = Some(member_id);
+                break;
+            }
+        }
+
+        let Some(member_id) = proxied_member else {
+            return Ok(());
+        };
+
+        let member = A::fetch_member_by_id(self, system_id, member_id)
+            .await?
+            .ok_or(NoMemberToProxyError)?;
+
+        self.resend_message(message, &member, trimmed_message_content).await?;
 
         return Ok(());
+    }
+
+    pub async fn on_message(&self, message: &A::Message) -> anyhow::Result<()> {
+        return self
+            .with_error_handler(message, self.on_message_raw(message))
+            .await;
     }
 }

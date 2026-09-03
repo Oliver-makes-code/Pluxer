@@ -30,16 +30,16 @@ impl BackendMessage for Message {
         return &self.channel_id;
     }
 
-    fn attachments(&self) -> Vec<FileAttachment> {
-        return self
-            .attachments
-            .iter()
-            .filter_map(|it| {
-                Some(FileAttachment {
-                    file_name: it.filename.clone(),
-                    file_url: it.url.clone()?,
-                })
+    fn referenced_message(&self) -> Option<&Message> {
+        return self.referenced_message.as_deref();
+    }
+
+    fn attachments(&self) -> impl Iterator<Item = FileAttachment> {
+        return self.attachments.iter().filter_map(|it| {
+            Some(FileAttachment {
+                file_name: it.filename.clone(),
+                file_url: it.url.clone()?,
             })
-            .collect();
+        });
     }
 }

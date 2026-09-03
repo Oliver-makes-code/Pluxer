@@ -8,7 +8,7 @@ use crate::{
             CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
         },
         commands::{
-            DELETE_VARIANTS, NAME, YES, YES_UNIX, member::MemberCommand,
+            DELETE_VARIANTS, YES, YES_UNIX, member::MemberCommand,
             system::create::CreateSystemCommand,
         },
     },

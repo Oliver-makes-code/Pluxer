@@ -129,7 +129,9 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateSystemCom
             return Ok(());
         };
 
-        if !self.clear && args.is_empty() {
+        let has_avatar_image = message.attachments().next().is_some();
+
+        if !(self.subcommand == Some(AVATAR_URL) && has_avatar_image) && !self.clear && args.is_empty() {
             context
                 .bot
                 .send_message(
@@ -148,11 +150,14 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateSystemCom
         let tag = extract_arg(args, TAG, self.subcommand, self.clear);
         let mut avatar_url = extract_arg(args, AVATAR_URL, self.subcommand, self.clear);
 
-        let attachments = message.attachments();
-        let attachment = attachments.first().map(|it| it.file_url.deref());
+        let attachment = message.attachments().next();
+        let attachment = attachment.as_ref().map(|it| it.file_url.deref());
 
-        if self.subcommand.is_some_and(|it| it == AVATAR_URL) {
-            avatar_url = avatar_url.map(|it| it.or(attachment));
+        if let Some(attachment) = attachment && self.subcommand.is_some_and(|it| it == AVATAR_URL) {
+            avatar_url = match avatar_url {
+                DatabaseUpdate::Keep => DatabaseUpdate::Set(Some(attachment)),
+                DatabaseUpdate::Set(old) => DatabaseUpdate::Set(old.or(Some(attachment)))
+            };
         }
 
         let pronouns = extract_arg(args, PRONOUNS, self.subcommand, self.clear);

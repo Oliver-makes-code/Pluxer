@@ -137,6 +137,8 @@ impl BackendBot for Rest {
         embed: Option<Embed>,
         referenced_message: Option<&Message>,
         file_uploads: &[FileUpload],
+        username: &str,
+        avatar_url: Option<&str>,
     ) -> Result<Message, Error> {
         let payload = message_payload(
             content,
@@ -145,8 +147,8 @@ impl BackendBot for Rest {
             file_uploads,
             |message| WebhookPayloadData {
                 message,
-                username: None,
-                avatar_url: None,
+                username: Some(username.into()),
+                avatar_url: avatar_url.map(ToString::to_string),
             },
         );
 
@@ -189,5 +191,16 @@ impl BackendBot for Rest {
         let channel: ApiChannel = self.get(&Routes::channel(channel_id)).await?;
 
         return Ok(Channel::from_api(&channel));
+    }
+
+    async fn delete_message(
+        &self,
+        channel_id: &Snowflake,
+        message_id: &Snowflake,
+    ) -> Result<(), Error> {
+        self.delete_route(&Routes::channel_message(channel_id, message_id))
+            .await?;
+
+        return Ok(());
     }
 }

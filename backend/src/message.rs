@@ -12,11 +12,13 @@ pub trait BackendMessage: Send + Sync {
 
     fn channel_id(&self) -> &<Self::Api as PluxerApi>::Id;
 
-    fn author(&self) -> &<Self::Api as crate::PluxerApi>::User;
+    fn author(&self) -> &<Self::Api as PluxerApi>::User;
 
     fn content(&self) -> &str;
 
     fn created_by_bot(&self) -> bool;
 
-    fn attachments(&self) -> Vec<FileAttachment>;
+    fn referenced_message(&self) -> Option<&<Self::Api as PluxerApi>::Message>;
+
+    fn attachments(&self) -> impl Iterator<Item = FileAttachment>;
 }
