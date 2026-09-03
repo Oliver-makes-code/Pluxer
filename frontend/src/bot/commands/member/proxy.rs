@@ -147,6 +147,23 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
             return Ok(());
         }
 
+        if proxy == "text" {
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some(format!(
+                        "Proxy tag must not be just 'text'\nUsage: `{}`",
+                        Self::USAGE
+                    )),
+                    None,
+                    Some(message),
+                )
+                .await?;
+
+            return Ok(());
+        }
+
         if let ProxyCommandMode::Create = mode {
             let has_proxy = A::has_system_proxy(context, system_id, proxy).await?;
 
@@ -168,6 +185,16 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
             }
 
             A::create_member_proxy(context, system_id, member_id, proxy.into()).await?;
+
+            context
+                .bot
+                .send_message(
+                    message.channel_id(),
+                    Some(format!("Proxy tag `{}` created.", proxy)),
+                    None,
+                    Some(message),
+                )
+                .await?;
 
             return Ok(());
         }
