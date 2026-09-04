@@ -10,7 +10,7 @@ use thiserror::Error;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PlatformId {
     Fluxer {
-        snowflake: u32,
+        snowflake: u64,
         instance_name: String,
     },
 }

@@ -6,7 +6,7 @@ use crate::entities::{DatabaseId, platform_id::PlatformId, system};
 #[sea_orm(table_name = "users")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: PlatformId,
+    pub user_id: PlatformId,
 
     pub system_id: DatabaseId,
 }

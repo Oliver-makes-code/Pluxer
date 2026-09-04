@@ -34,10 +34,8 @@ impl DatabaseHandler {
         let created = Utc::now();
 
         let model = message::ActiveModel {
-            id: ActiveValue::Set(DatabaseId::from(Ulid::generate())),
-
-            user_id: ActiveValue::Set(user_id),
             message_id: ActiveValue::Set(message_id),
+            user_id: ActiveValue::Set(user_id),
             channel_id: ActiveValue::Set(channel_id),
 
             system_id: ActiveValue::Set(system_id.into()),

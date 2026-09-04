@@ -29,7 +29,7 @@ impl DatabaseHandler {
         };
 
         let model = user::ActiveModel {
-            id: ActiveValue::Set(user_id),
+            user_id: ActiveValue::Set(user_id),
             system_id: ActiveValue::Set(system_id.into()),
         };
 
