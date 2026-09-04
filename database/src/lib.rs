@@ -1,6 +1,5 @@
 #![feature(duration_constructors)]
 
-mod connection;
 mod entities;
 pub mod handler;
 mod migrations;

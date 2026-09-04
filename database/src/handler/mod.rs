@@ -1,8 +1,9 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
-use sea_orm::{ActiveValue, DatabaseConnection, DbErr, Value};
+use sea_orm::{ActiveValue, ConnectOptions, Database, DatabaseConnection, DbErr, Value};
+use sea_orm_migration::MigratorTrait;
 
-use crate::connection::connect;
+use crate::migrations;
 
 pub mod member;
 pub mod message;
@@ -41,8 +42,17 @@ pub struct DatabaseHandler {
 
 impl DatabaseHandler {
     pub async fn new(url: &str) -> Result<Arc<Self>, DbErr> {
-        return Ok(Arc::new(Self {
-            conn: connect(url).await?,
-        }));
+        let mut options = ConnectOptions::new(url);
+
+        options
+            .max_connections(20)
+            .min_connections(5)
+            .connect_timeout(Duration::from_secs(8));
+
+        let database = Database::connect(options).await?;
+
+        migrations::Migrator::up(&database, None).await?;
+
+        return Ok(Arc::new(Self { conn: database }));
     }
 }
