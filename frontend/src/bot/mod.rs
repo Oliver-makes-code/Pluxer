@@ -6,7 +6,7 @@ use pluxer_backend::{
     bot::{BackendBot, FileUpload},
     embed::Embed,
     id::BackendId,
-    message::BackendMessage,
+    message::{BackendMessage, ReferencedMessageKind},
     user::BackendUser,
     webhook::BackendWebhook,
 };
@@ -85,7 +85,7 @@ impl<A: PluxerApi> PluxerContext<A> {
             footer: Some(format!("Error ID: {}", error_id)),
 
             ..Default::default()
-        }), Some(message), &[]).await;
+        }), Some((ReferencedMessageKind::Reply, message)), &[]).await;
 
         if let Err(err) = result {
             error_report += &format!("\n\n{}", err);
@@ -181,13 +181,21 @@ impl<A: PluxerApi> PluxerContext<A> {
             Cow::Borrowed(username)
         };
 
+        let referenced_message = if let Some(referenced_message) = message.referenced_message()
+            && let Some(kind) = message.referenced_message_kind()
+        {
+            Some((kind, referenced_message))
+        } else {
+            None
+        };
+
         let new_message = self
             .bot
             .send_message_webhook(
                 &webhook,
                 Some(trimmed_message_content.to_string()),
                 None,
-                message.referenced_message(),
+                referenced_message,
                 &files,
                 &username,
                 member

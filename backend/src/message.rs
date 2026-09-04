@@ -5,6 +5,13 @@ pub struct FileAttachment {
     pub file_url: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
+pub enum ReferencedMessageKind {
+    Reply = 0,
+    Forward = 1,
+}
+
 pub trait BackendMessage: Send + Sync {
     type Api: PluxerApi;
 
@@ -19,6 +26,8 @@ pub trait BackendMessage: Send + Sync {
     fn created_by_bot(&self) -> bool;
 
     fn referenced_message(&self) -> Option<&<Self::Api as PluxerApi>::Message>;
+
+    fn referenced_message_kind(&self) -> Option<ReferencedMessageKind>;
 
     fn attachments(&self) -> impl Iterator<Item = FileAttachment>;
 }

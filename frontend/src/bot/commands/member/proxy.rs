@@ -1,5 +1,10 @@
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
 use async_trait::async_trait;
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 
 use crate::bot::{
     PluxerContext,
@@ -64,7 +69,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -79,7 +84,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -98,7 +103,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                         name
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -113,7 +118,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -128,7 +133,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -146,7 +151,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                         Self::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -164,7 +169,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                         Self::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -185,7 +190,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                             proxy
                         )),
                         None,
-                        Some(message),
+                        Some((ReferencedMessageKind::Reply, message)),
                         &[],
                     )
                     .await?;
@@ -204,7 +209,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                     message.channel_id(),
                     Some(format!("Proxy tag `{}` created.", proxy)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -227,7 +232,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                         proxy
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -246,7 +251,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 message.channel_id(),
                 Some(format!("Proxy tag `{}` removed.", proxy)),
                 None,
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

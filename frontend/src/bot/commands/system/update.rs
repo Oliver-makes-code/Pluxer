@@ -1,7 +1,12 @@
 use std::ops::Deref;
 
 use async_trait::async_trait;
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 use pluxer_database::handler::DatabaseUpdate;
 
 use crate::bot::{
@@ -123,7 +128,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateSystemCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -143,7 +148,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateSystemCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", self.usage())),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -195,7 +200,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateSystemCommand {
                 message.channel_id(),
                 Some("System info updated! View it with `pl!system`".into()),
                 None,
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

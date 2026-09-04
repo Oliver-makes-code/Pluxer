@@ -1,5 +1,10 @@
 use async_trait::async_trait;
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 
 use crate::bot::{
     PluxerContext,
@@ -40,7 +45,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteSystemCommand {
                     message.channel_id(),
                     Some("You already do not have a system.".into()),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -55,7 +60,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteSystemCommand {
                     message.channel_id(),
                     Some("Are you sure you want to delete your system? Rerun the command as `pl!system delete -y` to confirm.".into()),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -74,7 +79,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteSystemCommand {
                     message.channel_id(),
                     Some("System deleted.".into()),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -85,7 +90,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteSystemCommand {
                     message.channel_id(),
                     Some("System detached from this accout.".into()),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;

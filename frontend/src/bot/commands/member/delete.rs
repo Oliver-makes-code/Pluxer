@@ -1,5 +1,10 @@
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
 use async_trait::async_trait;
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 
 use crate::bot::{
     PluxerContext,
@@ -47,7 +52,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -62,7 +67,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -80,7 +85,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                         name
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -95,7 +100,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                     message.channel_id(),
                     Some(format!("Are you sure you want to delete this member? Rerun the command as `pl!system delete -y {}` to confirm.", name)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -111,7 +116,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                 message.channel_id(),
                 Some("Member deleted.".into()),
                 None,
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

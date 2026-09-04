@@ -1,7 +1,12 @@
 use std::ops::Deref;
 
 use async_trait::async_trait;
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 use pluxer_database::handler::DatabaseUpdate;
 
 use crate::bot::{
@@ -128,7 +133,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -143,7 +148,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", self.usage())),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -162,7 +167,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                         member_name
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -182,7 +187,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", self.usage())),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -232,7 +237,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                 message.channel_id(),
                 Some("Member info updated! View them with `pl!member`".into()),
                 None,
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

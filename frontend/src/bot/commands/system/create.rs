@@ -1,5 +1,10 @@
 use async_trait::async_trait;
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 
 use crate::bot::{
     PluxerContext,
@@ -59,7 +64,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
                     message.channel_id(),
                     Some("You have already created a system. View it with `pl!system`".into()),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -74,7 +79,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -117,7 +122,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
                     system_id
                 )),
                 None,
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

@@ -1,6 +1,10 @@
 use async_trait::async_trait;
 use pluxer_backend::{
-    PluxerApi, bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
+    PluxerApi,
+    bot::BackendBot,
+    embed::Embed,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
 };
 use pluxer_database::model::system::SystemModel;
 
@@ -93,7 +97,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for SystemCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -111,7 +115,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for SystemCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -128,7 +132,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for SystemCommand {
                     system,
                     context.database.fetch_member_count(system_id).await?,
                 )),
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

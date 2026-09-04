@@ -1,5 +1,10 @@
-use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
 use async_trait::async_trait;
+use pluxer_backend::{
+    PluxerApi,
+    bot::BackendBot,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
+};
 
 use crate::bot::{
     PluxerContext,
@@ -61,7 +66,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -76,7 +81,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -96,7 +101,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                     message.channel_id(),
                     Some(format!("You already have a member named {}.", name)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -133,7 +138,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                 message.channel_id(),
                 Some(format!("Member created! View them with `{}`\n-# Member ID: {}\n-# Member Shorthand ID: {}", MemberCommand::USAGE, member_id, u32_to_base64(member_id_hash))),
                 None,
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                     &[],
             )
             .await?;

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{PluxerApi, embed::Embed};
+use crate::{PluxerApi, embed::Embed, message::ReferencedMessageKind};
 
 pub struct FileUpload {
     pub file_name: String,
@@ -31,7 +31,7 @@ pub trait BackendBot: Send + Sync {
         webhook: &<Self::Api as PluxerApi>::Webhook,
         content: Option<String>,
         embed: Option<Embed>,
-        referenced_message: Option<&<Self::Api as PluxerApi>::Message>,
+        referenced_message: Option<(ReferencedMessageKind, &<Self::Api as PluxerApi>::Message)>,
         file_uploads: &[FileUpload],
         username: &str,
         avatar_url: Option<&str>,
@@ -42,7 +42,7 @@ pub trait BackendBot: Send + Sync {
         channel_id: &<Self::Api as PluxerApi>::Id,
         content: Option<String>,
         embed: Option<Embed>,
-        referenced_message: Option<&<Self::Api as PluxerApi>::Message>,
+        referenced_message: Option<(ReferencedMessageKind, &<Self::Api as PluxerApi>::Message)>,
         file_uploads: &[FileUpload],
     ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
 

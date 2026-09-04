@@ -1,6 +1,10 @@
 use async_trait::async_trait;
 use pluxer_backend::{
-    PluxerApi, bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
+    PluxerApi,
+    bot::BackendBot,
+    embed::Embed,
+    message::{BackendMessage, ReferencedMessageKind},
+    user::BackendUser,
 };
 use pluxer_database::model::member::MemberModel;
 use ulid::Ulid;
@@ -180,7 +184,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberCommand {
                         CreateSystemCommand::USAGE
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -195,7 +199,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberCommand {
                     message.channel_id(),
                     Some(format!("Usage: `{}`", Self::USAGE)),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -213,7 +217,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberCommand {
                         name
                     )),
                     None,
-                    Some(message),
+                    Some((ReferencedMessageKind::Reply, message)),
                     &[],
                 )
                 .await?;
@@ -232,7 +236,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberCommand {
                 message.channel_id(),
                 None,
                 Some(Self::member_to_embed(member, &proxies)),
-                Some(message),
+                Some((ReferencedMessageKind::Reply, message)),
                 &[],
             )
             .await?;

@@ -16,6 +16,7 @@ use crate::{
     bot::{BackendBot, FileUpload},
     embed::Embed,
     fluxer::FluxerApi,
+    message::ReferencedMessageKind,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -48,7 +49,7 @@ struct WebhookCreatePayloadData {
 fn message_payload<T: Serialize>(
     content: Option<String>,
     embed: Option<Embed>,
-    referenced_message: Option<&Message>,
+    referenced_message: Option<(ReferencedMessageKind, &Message)>,
     file_uploads: &[FileUpload],
     map_payload: impl FnOnce(MessagePayloadDataExtension) -> T,
 ) -> Form {
@@ -62,17 +63,26 @@ fn message_payload<T: Serialize>(
         });
     }
 
+    let mut flags = 0;
+
+    if let Some(referenced) = &referenced_message {
+        if referenced.0 == ReferencedMessageKind::Forward {
+            flags |= 1;
+        }
+    }
+
     let message_payload = map_payload(MessagePayloadDataExtension {
         message: MessagePayloadData {
             content: content,
             embeds: embed.map(Into::into).map(|it| vec![it]),
             message_reference: referenced_message.map(|it| ApiMessageReference {
-                channel_id: it.channel_id.clone(),
-                message_id: it.id.clone(),
-                guild_id: it.guild_id.clone(),
-                kind: None,
+                channel_id: it.1.channel_id.clone(),
+                message_id: it.1.id.clone(),
+                guild_id: it.1.guild_id.clone(),
+                kind: Some(it.0 as u8),
             }),
             attachments: Some(attachments),
+            flags: Some(flags),
             ..Default::default()
         },
         allowed_mentions: Some(AllowedMentions {
@@ -135,7 +145,7 @@ impl BackendBot for Rest {
         webhook: &Webhook,
         content: Option<String>,
         embed: Option<Embed>,
-        referenced_message: Option<&Message>,
+        referenced_message: Option<(ReferencedMessageKind, &Message)>,
         file_uploads: &[FileUpload],
         username: &str,
         avatar_url: Option<&str>,
@@ -166,7 +176,7 @@ impl BackendBot for Rest {
         channel_id: &Snowflake,
         content: Option<String>,
         embed: Option<Embed>,
-        referenced_message: Option<&Message>,
+        referenced_message: Option<(ReferencedMessageKind, &Message)>,
         file_uploads: &[FileUpload],
     ) -> Result<Message, Error> {
         let payload = message_payload(
