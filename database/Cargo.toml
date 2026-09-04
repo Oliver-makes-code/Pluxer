@@ -6,5 +6,7 @@ edition = "2024"
 [dependencies]
 sea-orm.workspace = true
 sea-orm-migration.workspace = true
+thiserror = "2.0.20"
 tokio.workspace = true
 ulid = "3.0.0"
+xxhash-rust = { version = "0.8.18", features = ["xxh3"] }

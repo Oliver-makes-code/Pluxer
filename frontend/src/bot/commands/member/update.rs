@@ -1,23 +1,22 @@
 use std::ops::Deref;
 
-use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
-use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
+use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_database::{
+    handler::DatabaseUpdate, sea_orm::entity::prelude::async_trait::async_trait,
+};
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
-            node::unix::UnixParameter,
-        },
-        commands::{
-            AVATAR_URL, AVATAR_URL_VARIANTS, CLEAR_VARIANTS, COLOR, COLOR_VARIANTS, DESCRIPTION,
-            DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, NAME_VARIANTS,
-            PRONOUNS, PRONOUNS_VARIANTS, UPDATE_VARIANTS, extract_arg, member::MemberCommand,
-            parse_color_rgb, system::create::CreateSystemCommand,
-        },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
+        node::unix::UnixParameter,
     },
-    database::{DatabaseExtension, DatabaseUpdate},
+    commands::{
+        AVATAR_URL, AVATAR_URL_VARIANTS, CLEAR_VARIANTS, COLOR, COLOR_VARIANTS, DESCRIPTION,
+        DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, NAME_VARIANTS, PRONOUNS,
+        PRONOUNS_VARIANTS, UPDATE_VARIANTS, extract_arg, member::MemberCommand, parse_color_rgb,
+        system::create::CreateSystemCommand,
+    },
 };
 
 pub struct UpdateMemberCommand {
@@ -58,7 +57,7 @@ impl UpdateMemberCommand {
         return format!("pl!maember <name> {0} {0}", subcommand,);
     }
 
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(UPDATE_VARIANTS, |command| {
             command.executes(UpdateMemberCommand {
                 subcommand: None,
@@ -109,14 +108,18 @@ impl UpdateMemberCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+        let Some(system_id) = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?
+        else {
             context
                 .bot
                 .send_message(
@@ -211,17 +214,18 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for UpdateMemberCom
         let name =
             get_argument_single(args, NAME).map_or(DatabaseUpdate::Keep, DatabaseUpdate::Set);
 
-        A::update_member_by_id(
-            context,
-            member.id,
-            name,
-            display_name,
-            pronouns,
-            avatar_url,
-            description,
-            color,
-        )
-        .await?;
+        context
+            .database
+            .update_member_by_id(
+                member.id,
+                name,
+                display_name,
+                pronouns,
+                avatar_url,
+                description,
+                color,
+            )
+            .await?;
 
         context
             .bot

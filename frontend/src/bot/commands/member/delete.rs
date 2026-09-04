@@ -1,18 +1,14 @@
-use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
-        },
-        commands::{
-            DELETE_VARIANTS, YES, YES_UNIX, member::MemberCommand,
-            system::create::CreateSystemCommand,
-        },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
     },
-    database::DatabaseExtension,
+    commands::{
+        DELETE_VARIANTS, YES, YES_UNIX, member::MemberCommand, system::create::CreateSystemCommand,
+    },
 };
 
 pub struct DeleteMemberCommand;
@@ -20,7 +16,7 @@ pub struct DeleteMemberCommand;
 impl DeleteMemberCommand {
     pub const USAGE: &str = "pl!member <name> delete [-y]";
 
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(DELETE_VARIANTS, |command| {
             command.executes(DeleteMemberCommand);
 
@@ -30,14 +26,18 @@ impl DeleteMemberCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+        let Some(system_id) = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?
+        else {
             context
                 .bot
                 .send_message(
@@ -103,7 +103,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for DeleteMemberCom
             return Ok(());
         };
 
-        A::delete_member(context, system_id, member.id).await?;
+        context.database.delete_member(system_id, member.id).await?;
 
         context
             .bot

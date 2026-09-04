@@ -1,26 +1,25 @@
-use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{
+    PluxerApi, bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
+};
 use pluxer_database::{
     model::member::MemberModel, sea_orm::entity::prelude::async_trait::async_trait,
 };
 use ulid::Ulid;
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
-        },
-        commands::{
-            base64_to_u32,
-            member::{
-                create::CreateMemberCommand, delete::DeleteMemberCommand,
-                proxy::MemberProxyCommand, update::UpdateMemberCommand,
-            },
-            system::create::CreateSystemCommand,
-            u32_to_base64,
-        },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
     },
-    database::DatabaseExtension,
+    commands::{
+        base64_to_u32,
+        member::{
+            create::CreateMemberCommand, delete::DeleteMemberCommand, proxy::MemberProxyCommand,
+            update::UpdateMemberCommand,
+        },
+        system::create::CreateSystemCommand,
+        u32_to_base64,
+    },
 };
 
 pub mod create;
@@ -36,7 +35,7 @@ impl MemberCommand {
 
     pub const USAGE: &str = "pl!member <name>";
 
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["member", "m"], |command| {
             command.executes(MemberCommand);
 
@@ -101,56 +100,78 @@ impl MemberCommand {
         };
     }
 
-    async fn fetch_member<'a, A: DatabaseExtension>(
+    async fn fetch_member<'a, A: PluxerApi>(
         context: &'a PluxerContext<A>,
         system_id: Ulid,
         name: &str,
     ) -> anyhow::Result<Option<MemberModel>> {
         if let Some(id_hash) = base64_to_u32(name) {
-            if let Some(member) = A::fetch_member_by_hash(context, system_id, id_hash).await? {
+            if let Some(member) = context
+                .database
+                .fetch_member_by_hash(system_id, id_hash)
+                .await?
+            {
                 return Ok(Some(member));
             }
         }
 
         if let Ok(member_id) = Ulid::try_from(name) {
-            if let Some(member) = A::fetch_member_by_id(context, system_id, member_id).await? {
+            if let Some(member) = context
+                .database
+                .fetch_member_by_id(system_id, member_id)
+                .await?
+            {
                 return Ok(Some(member));
             }
         }
 
-        return Ok(A::fetch_member_by_name(context, system_id, name).await?);
+        return Ok(context
+            .database
+            .fetch_member_by_name(system_id, name)
+            .await?);
     }
 
-    async fn fetch_member_id<'a, A: DatabaseExtension>(
+    async fn fetch_member_id<'a, A: PluxerApi>(
         context: &'a PluxerContext<A>,
         system_id: Ulid,
         name: &str,
     ) -> anyhow::Result<Option<Ulid>> {
         if let Some(id_hash) = base64_to_u32(name) {
-            if let Some(member) = A::fetch_member_id_by_hash(context, system_id, id_hash).await? {
+            if let Some(member) = context
+                .database
+                .fetch_member_id_by_hash(system_id, id_hash)
+                .await?
+            {
                 return Ok(Some(member));
             }
         }
 
         if let Ok(member_id) = Ulid::try_from(name) {
-            if A::member_exists(context, system_id, member_id).await? {
+            if context.database.member_exists(system_id, member_id).await? {
                 return Ok(Some(member_id));
             }
         }
 
-        return Ok(A::fetch_member_id_by_name(context, system_id, name).await?);
+        return Ok(context
+            .database
+            .fetch_member_id_by_name(system_id, name)
+            .await?);
     }
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+        let Some(system_id) = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?
+        else {
             context
                 .bot
                 .send_message(
@@ -201,7 +222,10 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberCommand {
             return Ok(());
         };
 
-        let proxies = A::fetch_member_proxies(context, system_id, member.id).await?;
+        let proxies = context
+            .database
+            .fetch_member_proxies(system_id, member.id)
+            .await?;
 
         context
             .bot

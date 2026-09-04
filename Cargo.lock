@@ -2142,6 +2142,7 @@ dependencies = [
  "fluxer-types",
  "fluxer-util",
  "fluxer-ws",
+ "pluxer-database",
  "reqwest",
  "serde",
  "serde_json",
@@ -2153,8 +2154,10 @@ version = "0.1.0"
 dependencies = [
  "sea-orm",
  "sea-orm-migration",
+ "thiserror 2.0.20",
  "tokio",
  "ulid",
+ "xxhash-rust",
 ]
 
 [[package]]

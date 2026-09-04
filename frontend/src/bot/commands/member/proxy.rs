@@ -1,18 +1,15 @@
-use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
-        },
-        commands::{
-            CLEAR_VARIANTS, CREATE_VARIANTS, PROXY, member::MemberCommand,
-            system::create::CreateSystemCommand,
-        },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
     },
-    database::DatabaseExtension,
+    commands::{
+        CLEAR_VARIANTS, CREATE_VARIANTS, PROXY, member::MemberCommand,
+        system::create::CreateSystemCommand,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -26,7 +23,7 @@ pub struct MemberProxyCommand(Option<ProxyCommandMode>);
 impl MemberProxyCommand {
     pub const USAGE: &str = "pl!member <name> proxy <create|clear> [prefix]text[suffix]";
 
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["proxy", "p"], |command| {
             command.executes(MemberProxyCommand(None));
 
@@ -46,14 +43,18 @@ impl MemberProxyCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+        let Some(system_id) = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?
+        else {
             context
                 .bot
                 .send_message(
@@ -172,7 +173,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
         }
 
         if let ProxyCommandMode::Create = mode {
-            let has_proxy = A::has_system_proxy(context, system_id, proxy).await?;
+            let has_proxy = context.database.has_system_proxy(system_id, proxy).await?;
 
             if has_proxy {
                 context
@@ -192,7 +193,10 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
                 return Ok(());
             }
 
-            A::create_member_proxy(context, system_id, member_id, proxy.into()).await?;
+            context
+                .database
+                .create_member_proxy(system_id, member_id, proxy)
+                .await?;
 
             context
                 .bot
@@ -208,7 +212,10 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
             return Ok(());
         }
 
-        let has_proxy = A::has_member_proxy(context, system_id, member_id, proxy).await?;
+        let has_proxy = context
+            .database
+            .has_member_proxy(system_id, member_id, proxy)
+            .await?;
 
         if !has_proxy {
             context
@@ -228,7 +235,10 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for MemberProxyComm
             return Ok(());
         }
 
-        A::delete_member_proxy(context, system_id, member_id, proxy).await?;
+        context
+            .database
+            .delete_member_proxy(system_id, member_id, proxy)
+            .await?;
 
         context
             .bot

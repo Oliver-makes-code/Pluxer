@@ -2,39 +2,40 @@ use std::{borrow::Cow, fs, path::Path, sync::Arc, time::Duration};
 
 use moka::{future::Cache, policy::EvictionPolicy};
 use pluxer_backend::{
+    PluxerApi,
     bot::{BackendBot, FileUpload},
     embed::Embed,
+    id::BackendId,
     message::BackendMessage,
     user::BackendUser,
     webhook::BackendWebhook,
 };
-use pluxer_database::{model::member::MemberModel, sea_orm::DatabaseConnection};
+use pluxer_database::{
+    entities::platform_id::PlatformId, handler::DatabaseHandler, model::member::MemberModel,
+    sea_orm::DatabaseConnection,
+};
 use thiserror::Error;
 use tokio::sync::OnceCell;
 use ulid::Ulid;
 
-use crate::{
-    bot::{
-        command_parser::{CommandContext, CommandRoot, parse_command},
-        commands::create_command_tree,
-    },
-    database::DatabaseExtension,
+use crate::bot::{
+    command_parser::{CommandContext, CommandRoot, parse_command},
+    commands::create_command_tree,
 };
 
 mod command_parser;
 mod commands;
 
-pub struct PluxerContext<A: DatabaseExtension> {
+pub struct PluxerContext<A: PluxerApi> {
     pub bot: A::Bot,
-    pub database_connection: DatabaseConnection,
+    pub database: Arc<DatabaseHandler>,
     pub command_tree: CommandRoot<PluxerContext<A>>,
     pub webhook_cache: Cache<A::Id, A::Webhook>,
-    pub _instance_name: Arc<str>,
-    pub instance_url: Arc<str>,
+    pub instance_name: Arc<str>,
     pub user_id: OnceCell<A::Id>,
 }
 
-impl<A: DatabaseExtension> CommandContext for PluxerContext<A> {
+impl<A: PluxerApi> CommandContext for PluxerContext<A> {
     type CommandData = A::Message;
 }
 
@@ -42,26 +43,24 @@ impl<A: DatabaseExtension> CommandContext for PluxerContext<A> {
 #[error("The proxies should be deleted if the member doesn't exist")]
 struct NoMemberToProxyError;
 
-impl<A: DatabaseExtension> PluxerContext<A> {
+impl<A: PluxerApi> PluxerContext<A> {
     const PREFIXES: &[&str] = &["pl!", "pl?", "pl;", "pl/"];
 
     pub async fn new(
         bot: A::Bot,
-        database: DatabaseConnection,
+        database: Arc<DatabaseHandler>,
         instance_name: Arc<str>,
-        instance_url: Arc<str>,
     ) -> anyhow::Result<Self> {
         return Ok(Self {
             bot,
-            database_connection: database,
+            database,
             command_tree: create_command_tree(),
             webhook_cache: Cache::builder()
                 .max_capacity(50_000)
                 .eviction_policy(EvictionPolicy::lru())
                 .time_to_idle(Duration::from_hours(1))
                 .build(),
-            _instance_name: instance_name,
-            instance_url,
+            instance_name,
             user_id: OnceCell::new(),
         });
     }
@@ -160,7 +159,7 @@ impl<A: DatabaseExtension> PluxerContext<A> {
         member: &MemberModel,
         trimmed_message_content: &str,
     ) -> anyhow::Result<()> {
-        let Some(system) = A::fetch_system_by_id(self, member.system_id).await? else {
+        let Some(system) = self.database.fetch_system_by_id(member.system_id).await? else {
             return Ok(());
         };
 
@@ -199,20 +198,25 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             )
             .await?;
 
-        A::create_message(
-            self,
-            new_message.id(),
-            message.author().id(),
-            system.id,
-            member.id,
-        )
-        .await?;
+        self.database
+            .create_message(
+                self.get_platform_id(new_message.id()),
+                self.get_platform_id(message.channel_id()),
+                self.get_platform_id(message.author().id()),
+                system.id,
+                member.id,
+            )
+            .await?;
 
         self.bot
             .delete_message(message.channel_id(), message.id())
             .await?;
 
         return Ok(());
+    }
+
+    fn get_platform_id(&self, id: &A::Id) -> PlatformId {
+        return id.to_platform_id(Some(&self.instance_name));
     }
 
     async fn on_message_raw(&self, message: &A::Message) -> anyhow::Result<()> {
@@ -234,9 +238,9 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             return Ok(());
         }
 
-        let user_id = message.author().id();
+        let user_id = self.get_platform_id(message.author().id());
 
-        let Some(system_id) = A::fetch_system_id(self, user_id).await? else {
+        let Some(system_id) = self.database.fetch_system_id(user_id).await? else {
             return Ok(());
         };
 
@@ -244,13 +248,13 @@ impl<A: DatabaseExtension> PluxerContext<A> {
 
         let content = message.content();
 
-        let mut proxies = A::fetch_system_proxies(self, system_id).await?;
+        let mut proxies = self.database.fetch_system_proxies(system_id).await?;
 
         proxies.sort_by_key(|a| a.0.len());
 
         let mut trimmed_message_content = content;
 
-        for (proxy, member_id) in A::fetch_system_proxies(self, system_id).await? {
+        for (proxy, member_id) in proxies {
             let Some((prefix, suffix)) = proxy.split_once("text") else {
                 continue;
             };
@@ -276,7 +280,9 @@ impl<A: DatabaseExtension> PluxerContext<A> {
             return Ok(());
         };
 
-        let member = A::fetch_member_by_id(self, system_id, member_id)
+        let member = self
+            .database
+            .fetch_member_by_id(system_id, member_id)
             .await?
             .ok_or(NoMemberToProxyError)?;
 

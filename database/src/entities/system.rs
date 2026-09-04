@@ -25,25 +25,25 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::user::fluxer::Entity")]
-    FluxerUsers,
-    #[sea_orm(has_many = "super::message::fluxer::Entity")]
-    FluxerMessages,
+    #[sea_orm(has_many = "super::user::Entity")]
+    Users,
+    #[sea_orm(has_many = "super::message::Entity")]
+    Messages,
     #[sea_orm(has_many = "super::member::Entity")]
     Members,
     #[sea_orm(has_many = "super::proxy::Entity")]
     Proxies,
 }
 
-impl Related<super::message::fluxer::Entity> for Entity {
+impl Related<super::message::Entity> for Entity {
     fn to() -> RelationDef {
-        return Relation::FluxerMessages.def();
+        return Relation::Messages.def();
     }
 }
 
-impl Related<super::user::fluxer::Entity> for Entity {
+impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
-        return Relation::FluxerUsers.def();
+        return Relation::Users.def();
     }
 }
 

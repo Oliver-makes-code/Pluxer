@@ -3,18 +3,13 @@
 
 use std::{fs, sync::Arc, time::Duration};
 
-use pluxer_database::{
-    connect,
-    entities::message,
-    sea_orm::{ColumnTrait, EntityTrait, QueryFilter, sqlx::types::chrono::Utc},
-};
+use pluxer_database::handler::DatabaseHandler;
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 
 use crate::service::PluxerService;
 
 mod bot;
-mod database;
 mod service;
 
 #[derive(Serialize, Deserialize)]
@@ -32,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
 
     let config = serde_json::from_str::<PluxerConfig>(&config_string)?;
 
-    let database = connect(&config.database_url).await.unwrap();
+    let database = DatabaseHandler::new(&config.database_url).await?;
 
     let db = database.clone();
 
@@ -42,11 +37,7 @@ async fn main() -> anyhow::Result<()> {
         loop {
             interval.tick().await;
 
-            if let Err(err) = message::fluxer::Entity::delete_many()
-                .filter(message::fluxer::Column::ExpiresAt.lte(Utc::now()))
-                .exec(&db)
-                .await
-            {
+            if let Err(err) = db.clean_up_messages().await {
                 pawkit_logger::log!(error, "Failed to delete expired messages: {err}");
             }
         }

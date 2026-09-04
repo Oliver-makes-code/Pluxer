@@ -1,11 +1,15 @@
 use fluxer_types::Snowflake;
+use pluxer_database::entities::platform_id::PlatformId;
 
 use crate::{fluxer::FluxerApi, id::BackendId};
 
 impl BackendId for Snowflake {
     type Api = FluxerApi;
 
-    fn as_snowflake(&self) -> Option<u64> {
-        return self.parse().ok();
+    fn to_platform_id(&self, instance_name: Option<&str>) -> PlatformId {
+        return PlatformId::Fluxer {
+            snowflake: self.parse().unwrap(),
+            instance_name: instance_name.unwrap().into(),
+        };
     }
 }

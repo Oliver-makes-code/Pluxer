@@ -1,20 +1,21 @@
-use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
+use std::ops::Deref;
+
+use pluxer_backend::{
+    PluxerApi, bot::BackendBot, id::BackendId, message::BackendMessage, user::BackendUser,
+};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
-            node::unix::UnixParameter,
-        },
-        commands::{
-            AVATAR_URL, AVATAR_URL_VARIANTS, COLOR, COLOR_VARIANTS, CREATE_VARIANTS, DESCRIPTION,
-            DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, PRONOUNS,
-            PRONOUNS_VARIANTS, TAG, TAG_VARIANTS, parse_color_rgb,
-        },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
+        node::unix::UnixParameter,
     },
-    database::DatabaseExtension,
+    commands::{
+        AVATAR_URL, AVATAR_URL_VARIANTS, COLOR, COLOR_VARIANTS, CREATE_VARIANTS, DESCRIPTION,
+        DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, PRONOUNS,
+        PRONOUNS_VARIANTS, TAG, TAG_VARIANTS, parse_color_rgb,
+    },
 };
 
 pub struct CreateSystemCommand;
@@ -31,7 +32,7 @@ impl CreateSystemCommand {
 
     pub const USAGE: &str = "pl!system create [--tag=\"<tag>\"] [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--color=\"<color>\"] <name>";
 
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(CREATE_VARIANTS, |command| {
             command.executes(CreateSystemCommand);
 
@@ -43,14 +44,17 @@ impl CreateSystemCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let system_id = A::fetch_system_id(context, message.author().id()).await?;
+        let system_id = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?;
 
         if system_id.is_some() {
             context
@@ -94,18 +98,19 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateSystemCom
 
         let color = get_argument_single(args, COLOR).and_then(parse_color_rgb);
 
-        let system_id = A::create_system(
-            context,
-            message.author().id(),
-            name,
-            display_name,
-            description,
-            tag,
-            pronouns,
-            avatar_url,
-            color,
-        )
-        .await?;
+        let system_id = context
+            .database
+            .create_system(
+                context.get_platform_id(message.author().id()),
+                name,
+                display_name,
+                description,
+                tag,
+                pronouns,
+                avatar_url,
+                color,
+            )
+            .await?;
 
         context
             .bot

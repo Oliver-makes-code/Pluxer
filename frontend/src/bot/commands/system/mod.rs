@@ -1,21 +1,19 @@
-use pluxer_backend::{bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{
+    PluxerApi, bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
+};
 use pluxer_database::{
     model::system::SystemModel, sea_orm::entity::prelude::async_trait::async_trait,
 };
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder},
-        commands::{
-            member::MemberCommand,
-            system::{
-                create::CreateSystemCommand, delete::DeleteSystemCommand,
-                update::UpdateSystemCommand,
-            },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{CommandArguments, CommandExecutor, builder::CommandBuilder},
+    commands::{
+        member::MemberCommand,
+        system::{
+            create::CreateSystemCommand, delete::DeleteSystemCommand, update::UpdateSystemCommand,
         },
     },
-    database::DatabaseExtension,
 };
 
 pub mod create;
@@ -25,7 +23,7 @@ pub mod update;
 pub struct SystemCommand;
 
 impl SystemCommand {
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(&["system", "sys", "s"], |command| {
             command.executes(SystemCommand);
 
@@ -75,14 +73,18 @@ impl SystemCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for SystemCommand {
     async fn execute<'a>(
         &self,
         _args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+        let Some(system_id) = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?
+        else {
             context
                 .bot
                 .send_message(
@@ -100,7 +102,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
             return Ok(());
         };
 
-        let Some(system) = A::fetch_system_by_id(context, system_id).await? else {
+        let Some(system) = context.database.fetch_system_by_id(system_id).await? else {
             context
                 .bot
                 .send_message(
@@ -125,7 +127,7 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for SystemCommand {
                 None,
                 Some(Self::system_to_embed(
                     system,
-                    A::fetch_member_count(context, system_id).await?,
+                    context.database.fetch_member_count(system_id).await?,
                 )),
                 Some(message),
                 &[],

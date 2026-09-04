@@ -1,15 +1,14 @@
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD_INDIFFERENT};
+use pluxer_backend::PluxerApi;
+use pluxer_database::handler::DatabaseUpdate;
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandRoot, builder::CommandBuilder, get_argument_single,
-            node::unix::UnixParameter,
-        },
-        commands::{member::MemberCommand, system::SystemCommand},
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandRoot, builder::CommandBuilder, get_argument_single,
+        node::unix::UnixParameter,
     },
-    database::{DatabaseExtension, DatabaseUpdate},
+    commands::{member::MemberCommand, system::SystemCommand},
 };
 
 pub mod member;
@@ -86,7 +85,7 @@ fn extract_arg<'a>(
     return DatabaseUpdate::Set(Some(value));
 }
 
-pub fn create_command_tree<'a, A: DatabaseExtension>() -> CommandRoot<PluxerContext<A>> {
+pub fn create_command_tree<'a, A: PluxerApi>() -> CommandRoot<PluxerContext<A>> {
     return CommandBuilder::<PluxerContext<A>>::build(|command| {
         SystemCommand::append(command);
         MemberCommand::append(command);

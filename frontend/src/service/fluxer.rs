@@ -9,15 +9,15 @@ use pluxer_backend::fluxer::{
     fluxer_rest::RestOptions,
     fluxer_types::{ApiUser, Routes},
 };
-use pluxer_database::sea_orm::DatabaseConnection;
+use pluxer_database::handler::DatabaseHandler;
 
 use crate::bot::PluxerContext;
 
 pub async fn run(
-    api_url: Arc<str>,
+    api_url: &str,
     token: &str,
     instance_name: Arc<str>,
-    database: DatabaseConnection,
+    database: Arc<DatabaseHandler>,
 ) -> anyhow::Result<()> {
     let options = ClientOptions {
         intents: 0,
@@ -33,13 +33,8 @@ pub async fn run(
     let mut client = Client::new(options);
 
     let context = Arc::new(
-        PluxerContext::<FluxerApi>::new(
-            client.rest.clone(),
-            database,
-            instance_name.clone(),
-            api_url,
-        )
-        .await?,
+        PluxerContext::<FluxerApi>::new(client.rest.clone(), database, instance_name.clone())
+            .await?,
     );
 
     client.on_typed(move |event| {

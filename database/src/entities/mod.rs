@@ -3,6 +3,7 @@ use ulid::Ulid;
 
 pub mod member;
 pub mod message;
+pub mod platform_id;
 pub mod proxy;
 pub mod system;
 pub mod user;

@@ -1,15 +1,12 @@
 use sea_orm::*;
 
-use crate::entities::{DatabaseId, DatabaseSnowflake, system};
+use crate::entities::{DatabaseId, platform_id::PlatformId, system};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "fluxer_users")]
+#[sea_orm(table_name = "users")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: DatabaseSnowflake,
-
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub instance_url: String,
+    pub id: PlatformId,
 
     pub system_id: DatabaseId,
 }

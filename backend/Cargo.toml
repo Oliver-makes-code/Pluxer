@@ -23,6 +23,7 @@ fluxer-util.workspace = true
 fluxer-ws.optional = true
 
 fluxer-ws.workspace = true
+pluxer-database.workspace = true
 reqwest = { version = "0.12.28", features = ["multipart"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"

@@ -1,21 +1,18 @@
-use pluxer_backend::{bot::BackendBot, message::BackendMessage, user::BackendUser};
+use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
 use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
 
-use crate::{
-    bot::{
-        PluxerContext,
-        command_parser::{
-            CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
-            node::unix::UnixParameter,
-        },
-        commands::{
-            AVATAR_URL, AVATAR_URL_VARIANTS, COLOR, COLOR_VARIANTS, CREATE_VARIANTS, DESCRIPTION,
-            DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, PRONOUNS,
-            PRONOUNS_VARIANTS, member::MemberCommand, parse_color_rgb,
-            system::create::CreateSystemCommand, u32_to_base64,
-        },
+use crate::bot::{
+    PluxerContext,
+    command_parser::{
+        CommandArguments, CommandExecutor, builder::CommandBuilder, get_argument_single,
+        node::unix::UnixParameter,
     },
-    database::DatabaseExtension,
+    commands::{
+        AVATAR_URL, AVATAR_URL_VARIANTS, COLOR, COLOR_VARIANTS, CREATE_VARIANTS, DESCRIPTION,
+        DESCRIPTION_VARIANTS, DISPLAY_NAME, DISPLAY_NAME_VARIANTS, NAME, PRONOUNS,
+        PRONOUNS_VARIANTS, member::MemberCommand, parse_color_rgb,
+        system::create::CreateSystemCommand, u32_to_base64,
+    },
 };
 
 pub struct CreateMemberCommand;
@@ -31,7 +28,7 @@ impl CreateMemberCommand {
 
     pub const USAGE: &str = "pl!member create [--avatar_url=\"<avatar_url>\"] [--description=\"<description>\"] [--pronouns=\"<pronouns>\"] [--display_name=\"<display_name>\"] [--color=\"<color>\"] <name>";
 
-    pub fn append<A: DatabaseExtension>(command: &mut CommandBuilder<PluxerContext<A>>) {
+    pub fn append<A: PluxerApi>(command: &mut CommandBuilder<PluxerContext<A>>) {
         command.literal(CREATE_VARIANTS, |command| {
             command.executes(CreateMemberCommand);
 
@@ -43,14 +40,18 @@ impl CreateMemberCommand {
 }
 
 #[async_trait]
-impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
+impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
     async fn execute<'a>(
         &self,
         args: &'a CommandArguments<'a>,
         context: &'a PluxerContext<A>,
         message: &A::Message,
     ) -> anyhow::Result<()> {
-        let Some(system_id) = A::fetch_system_id(context, message.author().id()).await? else {
+        let Some(system_id) = context
+            .database
+            .fetch_system_id(context.get_platform_id(message.author().id()))
+            .await?
+        else {
             context
                 .bot
                 .send_message(
@@ -83,7 +84,9 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCom
             return Ok(());
         };
 
-        if A::fetch_member_by_name(context, system_id, name)
+        if context
+            .database
+            .fetch_member_by_name(system_id, name)
             .await?
             .is_some()
         {
@@ -111,17 +114,18 @@ impl<A: DatabaseExtension> CommandExecutor<PluxerContext<A>> for CreateMemberCom
 
         let color = get_argument_single(args, COLOR).and_then(parse_color_rgb);
 
-        let (member_id, member_id_hash) = A::create_member(
-            context,
-            system_id,
-            name,
-            display_name,
-            description,
-            pronouns,
-            avatar_url,
-            color,
-        )
-        .await?;
+        let (member_id, member_id_hash) = context
+            .database
+            .create_member(
+                system_id,
+                name,
+                display_name,
+                description,
+                pronouns,
+                avatar_url,
+                color,
+            )
+            .await?;
 
         context
             .bot

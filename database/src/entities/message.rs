@@ -1,21 +1,21 @@
 use sea_orm::{prelude::DateTimeUtc, *};
 
-use crate::entities::{DatabaseId, DatabaseSnowflake, member, system};
+use crate::entities::{DatabaseId, member, platform_id::PlatformId, system};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-#[sea_orm(table_name = "fluxer_messages")]
+#[sea_orm(table_name = "messages")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub id: DatabaseSnowflake,
+    pub id: DatabaseId,
 
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub instance_url: String,
-
-    pub author_id: DatabaseSnowflake,
+    pub user_id: PlatformId,
+    pub message_id: PlatformId,
+    pub channel_id: PlatformId,
 
     pub system_id: DatabaseId,
     pub member_id: DatabaseId,
 
+    pub created_at: DateTimeUtc,
     pub expires_at: DateTimeUtc,
 }
 
