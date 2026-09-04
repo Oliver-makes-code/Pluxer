@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use pluxer_database::entities::platform_id::PlatformId;
+use pluxer_database::platform_id::PlatformId;
 
 use crate::PluxerApi;
 

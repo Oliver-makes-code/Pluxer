@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ops::Deref};
 
-use pluxer_database::sea_orm::entity::prelude::async_trait::async_trait;
+use async_trait::async_trait;
 
 use crate::bot::command_parser::{
     cursor::{SourceCursor, Spanned},

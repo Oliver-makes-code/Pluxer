@@ -5,9 +5,10 @@ use sea_orm::{
 use ulid::Ulid;
 
 use crate::{
-    entities::{DatabaseId, platform_id::PlatformId, system, user},
+    entities::{DatabaseId, system, user},
     handler::{DatabaseHandler, DatabaseUpdate},
     model::system::SystemModel,
+    platform_id::PlatformId,
 };
 
 impl DatabaseHandler {

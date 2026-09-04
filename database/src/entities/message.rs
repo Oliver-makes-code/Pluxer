@@ -1,6 +1,9 @@
 use sea_orm::{prelude::DateTimeUtc, *};
 
-use crate::entities::{DatabaseId, member, platform_id::PlatformId, system};
+use crate::{
+    entities::{DatabaseId, member, system},
+    platform_id::PlatformId,
+};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "messages")]

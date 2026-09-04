@@ -6,10 +6,7 @@ use sea_orm::{
 };
 use ulid::Ulid;
 
-use crate::{
-    entities::{DatabaseId, message, platform_id::PlatformId},
-    handler::DatabaseHandler,
-};
+use crate::{entities::message, handler::DatabaseHandler, platform_id::PlatformId};
 
 impl DatabaseHandler {
     const MESSAGE_ALIVE_TIME: Duration = Duration::from_days(7);

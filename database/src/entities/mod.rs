@@ -3,7 +3,6 @@ use ulid::Ulid;
 
 pub mod member;
 pub mod message;
-pub mod platform_id;
 pub mod proxy;
 pub mod system;
 pub mod user;
@@ -36,6 +35,3 @@ impl TryFromU64 for DatabaseId {
         ));
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, DeriveValueType)]
-pub struct DatabaseSnowflake(pub i64);

@@ -8,6 +8,7 @@ pluxer-backend.workspace = true
 pluxer-database.workspace = true
 tokio = { workspace = true, features = ["macros"] }
 dotenv.workspace = true
+async-trait.workspace = true
 serde = { version = "1.0.229", features = ["derive"] }
 thiserror = "2.0.20"
 serde_json = "1.0.151"

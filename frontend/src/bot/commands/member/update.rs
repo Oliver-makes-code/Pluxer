@@ -1,9 +1,8 @@
 use std::ops::Deref;
 
+use async_trait::async_trait;
 use pluxer_backend::{PluxerApi, bot::BackendBot, message::BackendMessage, user::BackendUser};
-use pluxer_database::{
-    handler::DatabaseUpdate, sea_orm::entity::prelude::async_trait::async_trait,
-};
+use pluxer_database::handler::DatabaseUpdate;
 
 use crate::bot::{
     PluxerContext,

@@ -1,6 +1,9 @@
 use sea_orm::*;
 
-use crate::entities::{DatabaseId, platform_id::PlatformId, system};
+use crate::{
+    entities::{DatabaseId, system},
+    platform_id::PlatformId,
+};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "users")]

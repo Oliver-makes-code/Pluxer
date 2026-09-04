@@ -1,5 +1,5 @@
 use fluxer_types::Snowflake;
-use pluxer_database::entities::platform_id::PlatformId;
+use pluxer_database::platform_id::PlatformId;
 
 use crate::{fluxer::FluxerApi, id::BackendId};
 

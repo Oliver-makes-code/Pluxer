@@ -1,9 +1,8 @@
+use async_trait::async_trait;
 use pluxer_backend::{
     PluxerApi, bot::BackendBot, embed::Embed, message::BackendMessage, user::BackendUser,
 };
-use pluxer_database::{
-    model::system::SystemModel, sea_orm::entity::prelude::async_trait::async_trait,
-};
+use pluxer_database::model::system::SystemModel;
 
 use crate::bot::{
     PluxerContext,

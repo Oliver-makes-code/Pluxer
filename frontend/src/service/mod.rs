@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use pluxer_database::{handler::DatabaseHandler, sea_orm::DatabaseConnection};
+use pluxer_database::handler::DatabaseHandler;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "fluxer")]

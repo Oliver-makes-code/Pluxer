@@ -173,7 +173,7 @@ impl BackendBot for Rest {
             content,
             embed,
             referenced_message,
-            &[],
+            file_uploads,
             std::convert::identity,
         );
 

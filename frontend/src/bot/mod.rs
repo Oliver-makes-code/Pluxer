@@ -11,8 +11,7 @@ use pluxer_backend::{
     webhook::BackendWebhook,
 };
 use pluxer_database::{
-    entities::platform_id::PlatformId, handler::DatabaseHandler, model::member::MemberModel,
-    sea_orm::DatabaseConnection,
+    handler::DatabaseHandler, model::member::MemberModel, platform_id::PlatformId,
 };
 use thiserror::Error;
 use tokio::sync::OnceCell;
