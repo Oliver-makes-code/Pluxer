@@ -43,6 +43,10 @@ impl MemberProxyCommand {
 
                 command.greedy_string(PROXY, |_| {});
             });
+
+            command.greedy_string(PROXY, |command| {
+                command.executes(MemberProxyCommand(Some(ProxyCommandMode::Create)));
+            });
         });
     }
 }
