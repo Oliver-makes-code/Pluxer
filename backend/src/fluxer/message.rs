@@ -55,6 +55,8 @@ impl BackendMessage for Message {
             Some(FileAttachment {
                 file_name: it.filename.clone(),
                 file_url: it.url.clone()?,
+                is_spoiler: it.flags.is_some_and(|it| it & 8 != 0),
+                is_nsfw: it.flags.is_some_and(|it| it & 32 != 0),
             })
         });
     }

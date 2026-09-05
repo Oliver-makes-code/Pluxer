@@ -3,6 +3,8 @@ use crate::PluxerApi;
 pub struct FileAttachment {
     pub file_name: String,
     pub file_url: String,
+    pub is_spoiler: bool,
+    pub is_nsfw: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

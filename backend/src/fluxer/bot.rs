@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use fluxer_builders::{AttachmentPayload, MessagePayloadData};
 use fluxer_core::{
     Channel,
     Error::{self, WebhookTokenRequired},
@@ -7,7 +6,7 @@ use fluxer_core::{
 };
 use fluxer_rest::Rest;
 use fluxer_types::{
-    ApiChannel, ApiMessage, ApiMessageReference, ApiUser, ApiWebhook, Routes, Snowflake,
+    ApiChannel, ApiEmbed, ApiMessage, ApiMessageReference, ApiUser, ApiWebhook, Routes, Snowflake,
 };
 use reqwest::multipart::{Form, Part};
 use serde::{Deserialize, Serialize};
@@ -22,6 +21,32 @@ use crate::{
 #[derive(Serialize, Deserialize)]
 struct AllowedMentions {
     pub replied_user: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct MessagePayloadData {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embeds: Option<Vec<ApiEmbed>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attachments: Option<Vec<AttachmentPayload>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_reference: Option<ApiMessageReference>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tts: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flags: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AttachmentPayload {
+    pub id: u32,
+    pub filename: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flags: Option<u32>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -60,6 +85,10 @@ fn message_payload<T: Serialize>(
             id: id as u32,
             filename: upload.file_name.clone(),
             description: None,
+            flags: Some(
+                0 | (upload.is_spoiler.then_some(8).unwrap_or(0))
+                    | (upload.is_nsfw.then_some(32).unwrap_or(0)),
+            ),
         });
     }
 

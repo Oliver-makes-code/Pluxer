@@ -170,6 +170,8 @@ impl<A: PluxerApi> PluxerContext<A> {
             files.push(FileUpload {
                 file_name: attachment.file_name,
                 data: Self::fetch(&attachment.file_url).await?,
+                is_nsfw: attachment.is_nsfw,
+                is_spoiler: attachment.is_spoiler,
             });
         }
 

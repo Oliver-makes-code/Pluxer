@@ -5,6 +5,8 @@ use crate::{PluxerApi, embed::Embed, fluxer::FluxerApi, message::ReferencedMessa
 pub struct FileUpload {
     pub file_name: String,
     pub data: Vec<u8>,
+    pub is_spoiler: bool,
+    pub is_nsfw: bool,
 }
 
 #[async_trait]
