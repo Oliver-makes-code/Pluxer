@@ -12,4 +12,14 @@ impl BackendId for Snowflake {
             instance_name: instance_name.unwrap().into(),
         };
     }
+
+    fn from_platform_id(value: &PlatformId) -> Option<Self> {
+        match value {
+            PlatformId::Fluxer {
+                snowflake,
+                instance_name: _,
+            } => return Some(snowflake.to_string()),
+            _ => return None,
+        }
+    }
 }

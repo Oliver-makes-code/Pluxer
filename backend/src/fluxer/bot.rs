@@ -47,7 +47,7 @@ struct WebhookCreatePayloadData {
 }
 
 fn message_payload<T: Serialize>(
-    content: Option<String>,
+    content: Option<&str>,
     embed: Option<Embed>,
     referenced_message: Option<(ReferencedMessageKind, &Message)>,
     file_uploads: &[FileUpload],
@@ -73,7 +73,7 @@ fn message_payload<T: Serialize>(
 
     let message_payload = map_payload(MessagePayloadDataExtension {
         message: MessagePayloadData {
-            content: content,
+            content: content.map(Into::into),
             embeds: embed.map(Into::into).map(|it| vec![it]),
             message_reference: referenced_message.map(|it| ApiMessageReference {
                 channel_id: it.1.channel_id.clone(),
@@ -143,7 +143,7 @@ impl BackendBot for Rest {
     async fn send_message_webhook(
         &self,
         webhook: &Webhook,
-        content: Option<String>,
+        content: Option<&str>,
         embed: Option<Embed>,
         referenced_message: Option<(ReferencedMessageKind, &Message)>,
         file_uploads: &[FileUpload],
@@ -174,7 +174,7 @@ impl BackendBot for Rest {
     async fn send_message(
         &self,
         channel_id: &Snowflake,
-        content: Option<String>,
+        content: Option<&str>,
         embed: Option<Embed>,
         referenced_message: Option<(ReferencedMessageKind, &Message)>,
         file_uploads: &[FileUpload],
@@ -210,6 +210,43 @@ impl BackendBot for Rest {
     ) -> Result<(), Error> {
         self.delete_route(&Routes::channel_message(channel_id, message_id))
             .await?;
+
+        return Ok(());
+    }
+
+    async fn fetch_message(
+        &self,
+        channel_id: &Snowflake,
+        message_id: &Snowflake,
+    ) -> Result<Message, Error> {
+        let message = self
+            .get::<ApiMessage>(&Routes::channel_message(channel_id, message_id))
+            .await?;
+
+        return Ok(Message::from_api(&message));
+    }
+
+    async fn edit_message_webhook(
+        &self,
+        webhook: &Webhook,
+        message_id: &Snowflake,
+        content: &str,
+    ) -> Result<(), Error> {
+        let data = MessagePayloadData {
+            content: Some(content.to_string()),
+            ..Default::default()
+        };
+
+        self.patch::<ApiMessage>(
+            &format!(
+                "/webhooks/{}/{}/messages/{}",
+                webhook.id,
+                webhook.token.as_ref().unwrap(),
+                message_id
+            ),
+            Some(&data),
+        )
+        .await?;
 
         return Ok(());
     }

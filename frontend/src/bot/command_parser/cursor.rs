@@ -11,6 +11,7 @@ pub struct SourcePos {
     column: NonZeroU32,
 }
 
+#[derive(Clone, Copy)]
 pub struct SourceCursor<'a> {
     file_path: Option<&'a str>,
     source: &'a str,

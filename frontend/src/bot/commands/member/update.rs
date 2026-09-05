@@ -128,7 +128,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "You do not have a system. Create one with `{}`",
                         CreateSystemCommand::USAGE
                     )),
@@ -146,7 +146,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", self.usage())),
+                    Some(&format!("Usage: `{}`", self.usage())),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -162,7 +162,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "Unable to find member '{}'. Are you sure you typed in the name correctly?",
                         member_name
                     )),
@@ -185,7 +185,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for UpdateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", self.usage())),
+                    Some(&format!("Usage: `{}`", self.usage())),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],

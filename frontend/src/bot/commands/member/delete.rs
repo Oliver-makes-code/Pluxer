@@ -47,7 +47,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "You do not have a system. Create one with `{}`",
                         CreateSystemCommand::USAGE
                     )),
@@ -65,7 +65,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    Some(&format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -80,7 +80,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "Unable to find member '{}'. Are you sure you typed in the name correctly?",
                         name
                     )),
@@ -98,7 +98,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for DeleteMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Are you sure you want to delete this member? Rerun the command as `pl!system delete -y {}` to confirm.", name)),
+                    Some(&format!("Are you sure you want to delete this member? Rerun the command as `pl!system delete -y {}` to confirm.", name)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],

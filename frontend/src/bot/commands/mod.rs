@@ -8,10 +8,11 @@ use crate::bot::{
         CommandArguments, CommandRoot, builder::CommandBuilder, get_argument_single,
         node::unix::UnixParameter,
     },
-    commands::{member::MemberCommand, system::SystemCommand},
+    commands::{member::MemberCommand, message::MessageCommand, system::SystemCommand},
 };
 
 pub mod member;
+pub mod message;
 pub mod system;
 
 pub const NAME: &str = "name";
@@ -89,5 +90,6 @@ pub fn create_command_tree<'a, A: PluxerApi>() -> CommandRoot<PluxerContext<A>> 
     return CommandBuilder::<PluxerContext<A>>::build(|command| {
         SystemCommand::append(command);
         MemberCommand::append(command);
+        MessageCommand::append(command);
     });
 }

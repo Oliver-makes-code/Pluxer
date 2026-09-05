@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{PluxerApi, embed::Embed, message::ReferencedMessageKind};
+use crate::{PluxerApi, embed::Embed, fluxer::FluxerApi, message::ReferencedMessageKind};
 
 pub struct FileUpload {
     pub file_name: String,
@@ -29,7 +29,7 @@ pub trait BackendBot: Send + Sync {
     async fn send_message_webhook(
         &self,
         webhook: &<Self::Api as PluxerApi>::Webhook,
-        content: Option<String>,
+        content: Option<&str>,
         embed: Option<Embed>,
         referenced_message: Option<(ReferencedMessageKind, &<Self::Api as PluxerApi>::Message)>,
         file_uploads: &[FileUpload],
@@ -40,10 +40,16 @@ pub trait BackendBot: Send + Sync {
     async fn send_message(
         &self,
         channel_id: &<Self::Api as PluxerApi>::Id,
-        content: Option<String>,
+        content: Option<&str>,
         embed: Option<Embed>,
         referenced_message: Option<(ReferencedMessageKind, &<Self::Api as PluxerApi>::Message)>,
         file_uploads: &[FileUpload],
+    ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
+
+    async fn fetch_message(
+        &self,
+        channel_id: &<Self::Api as PluxerApi>::Id,
+        message_id: &<Self::Api as PluxerApi>::Id,
     ) -> Result<<Self::Api as PluxerApi>::Message, <Self::Api as PluxerApi>::Error>;
 
     async fn get_channel(
@@ -55,5 +61,12 @@ pub trait BackendBot: Send + Sync {
         &self,
         channel_id: &<Self::Api as PluxerApi>::Id,
         message_id: &<Self::Api as PluxerApi>::Id,
+    ) -> Result<(), <Self::Api as PluxerApi>::Error>;
+
+    async fn edit_message_webhook(
+        &self,
+        webhook: &<Self::Api as PluxerApi>::Webhook,
+        message_id: &<Self::Api as PluxerApi>::Id,
+        content: &str,
     ) -> Result<(), <Self::Api as PluxerApi>::Error>;
 }

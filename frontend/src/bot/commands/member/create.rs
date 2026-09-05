@@ -61,7 +61,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "You do not have a system. Create one with `{}`",
                         CreateSystemCommand::USAGE
                     )),
@@ -79,7 +79,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    Some(&format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -99,7 +99,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("You already have a member named {}.", name)),
+                    Some(&format!("You already have a member named {}.", name)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -136,7 +136,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateMemberCommand {
             .bot
             .send_message(
                 message.channel_id(),
-                Some(format!("Member created! View them with `{}`\n-# Member ID: {}\n-# Member Shorthand ID: {}", MemberCommand::USAGE, member_id, u32_to_base64(member_id_hash))),
+                Some(&format!("Member created! View them with `{}`\n-# Member ID: {}\n-# Member Shorthand ID: {}", MemberCommand::USAGE, member_id, u32_to_base64(member_id_hash))),
                 None,
                 Some((ReferencedMessageKind::Reply, message)),
                     &[],

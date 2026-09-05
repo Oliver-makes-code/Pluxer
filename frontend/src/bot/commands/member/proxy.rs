@@ -64,7 +64,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "You do not have a system. Create one with `{}`",
                         CreateSystemCommand::USAGE
                     )),
@@ -82,7 +82,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    Some(&format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -98,7 +98,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "Unable to find member '{}'. Are you sure you typed in the name correctly?",
                         name
                     )),
@@ -116,7 +116,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    Some(&format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -131,7 +131,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    Some(&format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -146,7 +146,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "Proxy tag must contain 'text'\nUsage: `{}`",
                         Self::USAGE
                     )),
@@ -164,7 +164,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "Proxy tag must not be just 'text'\nUsage: `{}`",
                         Self::USAGE
                     )),
@@ -185,7 +185,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                     .bot
                     .send_message(
                         message.channel_id(),
-                        Some(format!(
+                        Some(&format!(
                             "Proxy tag `{}` already exists in the system.",
                             proxy
                         )),
@@ -207,7 +207,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Proxy tag `{}` created.", proxy)),
+                    Some(&format!("Proxy tag `{}` created.", proxy)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -227,7 +227,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!(
+                    Some(&format!(
                         "Proxy tag `{}` already does not exist in the system.",
                         proxy
                     )),
@@ -249,7 +249,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for MemberProxyCommand {
             .bot
             .send_message(
                 message.channel_id(),
-                Some(format!("Proxy tag `{}` removed.", proxy)),
+                Some(&format!("Proxy tag `{}` removed.", proxy)),
                 None,
                 Some((ReferencedMessageKind::Reply, message)),
                 &[],

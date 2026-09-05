@@ -77,7 +77,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
                 .bot
                 .send_message(
                     message.channel_id(),
-                    Some(format!("Usage: `{}`", Self::USAGE)),
+                    Some(&format!("Usage: `{}`", Self::USAGE)),
                     None,
                     Some((ReferencedMessageKind::Reply, message)),
                     &[],
@@ -117,7 +117,7 @@ impl<A: PluxerApi> CommandExecutor<PluxerContext<A>> for CreateSystemCommand {
             .bot
             .send_message(
                 message.channel_id(),
-                Some(format!(
+                Some(&format!(
                     "System created! View it with `pl!system`\n-# System ID: {}",
                     system_id
                 )),

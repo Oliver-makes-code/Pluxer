@@ -193,7 +193,7 @@ impl<A: PluxerApi> PluxerContext<A> {
             .bot
             .send_message_webhook(
                 &webhook,
-                Some(trimmed_message_content.to_string()),
+                Some(trimmed_message_content),
                 None,
                 referenced_message,
                 &files,
